@@ -979,56 +979,6 @@ theorem residue_prime_mult_group_has_gen :
   thus ?thesis using a by blast
  qed
 
-
-(*
-theorem residue_prime_has_gen:
- fixes p :: int
- assumes prime_p: "prime p"
- shows "\<exists> a \<in> {1 .. p - 1} . {1 .. p - 1} = {a^i mod p|i . i \<in> (UNIV :: nat set)}"
- proof -
- have "p\<ge>2" using prime_p by (metis prime_ge_2_int)
- hence p:"residues p" using residues_def by auto
- have "residues_prime p" using prime_p residues_prime_def by auto
- hence "field (residue_ring p)" using Residues.residues_prime.is_field by auto
- then obtain a where a1:"a \<in> carrier (residue_ring p) - {\<zero>\<^bsub>residue_ring p\<^esub>}" and a2:"carrier (residue_ring p) - {\<zero>\<^bsub>residue_ring p\<^esub>} = {a (^)\<^bsub>residue_ring p\<^esub> i |i . i \<in> (UNIV :: nat set)}" using field.field_mult_group_has_gen[of "residue_ring p"] by blast
- have carr:"carrier (residue_ring p) - {\<zero>\<^bsub>residue_ring p\<^esub>} = {1 .. p - 1}" using Residues.residues.zero_cong p Residues.residues.res_carrier_eq by auto
- hence a11:"a \<in> {1 .. p - 1}" using a1 by auto 
- hence a22 : "{1 .. p - 1} = {a (^)\<^bsub>residue_ring p\<^esub> i|i . i \<in> (UNIV :: nat set)}" using carr a2 by auto
- have "{a (^)\<^bsub>residue_ring p\<^esub> i|i . i \<in> (UNIV :: nat set)} = {a^i mod p|i . i \<in> (UNIV :: nat set)}"
- proof
-  show "{a (^)\<^bsub>residue_ring p\<^esub> i|i . i \<in> (UNIV :: nat set)} \<subseteq> {a^i mod p|i . i \<in> (UNIV :: nat set)}"
-  proof
-      fix x
-      assume "x \<in> {a (^)\<^bsub>residue_ring p\<^esub> i|i . i \<in> (UNIV :: nat set)}"
-      then obtain i::nat where i:"x = a (^)\<^bsub>residue_ring p\<^esub> i" by auto
-      have "a = a mod p " using a11 by auto
-      hence "a (^)\<^bsub>residue_ring p\<^esub> i = a ^ i mod p" using Residues.residues.pow_cong[of p a i] p by auto
-      thus "x \<in> {a^i mod p|i . i \<in> (UNIV :: nat set)}" using i by auto
-   qed
-   next
-   show "{a^i mod p|i . i \<in> (UNIV :: nat set)} \<subseteq> {a (^)\<^bsub>residue_ring p\<^esub> i|i . i \<in> (UNIV :: nat set)}"
-   proof
-      fix x
-      assume "x \<in> {a^i mod p|i . i \<in> (UNIV :: nat set)}"
-      then obtain i::nat where i:"x = a ^ i mod p" by auto
-      have "a = a mod p " using a11 by auto
-      hence " a ^ i mod p = a (^)\<^bsub>residue_ring p\<^esub> i" using Residues.residues.pow_cong[of p a i] p by auto
-      thus "x \<in> {a (^)\<^bsub>residue_ring p\<^esub> i|i . i \<in> (UNIV :: nat set)}" using i by auto
-   qed
- qed
- hence a222 : "{1 .. p - 1} = {a^i mod p|i . i \<in> (UNIV :: nat set)}" using a22 by auto
- thus ?thesis using a11 by auto
-qed
-*)
-
-lemma mod_nat_int :
- fixes a :: int
- fixes p :: nat
- fixes n :: nat
- assumes "a > 0"
- assumes "p > 0"
- shows "nat (a ^ n mod (int p)) = nat a ^ n mod p" using assms by (metis (hide_lams, mono_tags) int_power nat_int zero_less_imp_eq_int zmod_int)
-
 lemma blablub :
  fixes p :: nat
  fixes a :: nat
@@ -1046,37 +996,6 @@ theorem lehmer_backwards:
  shows "\<exists> a. [a^(p - 1) = 1] (mod p) \<and> (\<forall> x . 0 < x \<longrightarrow> x \<le> p - 2 \<longrightarrow> [a^x \<noteq> 1] (mod p))"
  proof -
    have "p \<ge> 2" using prime_ge_2_nat 1 by auto
-   (*
-   have "prime (int p)" using 1 by (metis transfer_int_nat_prime)
-   then obtain a' where a':"a' \<in> {1 .. int p - 1} \<and> {1 .. int p - 1 } = {a'^i mod (int p)|i . i \<in> (UNIV :: nat set)}" using 1 residue_prime_has_gen[of "int p"] by blast
-   have "int p\<ge>2" using prime_ge_2_int 1 `prime (int p)` by auto
-   hence "{1 .. p - 1} = nat ` {1 .. int p - 1}" by (metis "1" Set_Interval.transfer_nat_int_set_functions(2) of_nat_1 of_nat_diff prime_ge_1_nat)
-   hence set_eq:"{1 .. p - 1} = nat ` {a'^i mod (int p)|i . i \<in> (UNIV :: nat set)}" using a' by auto
-   have "{1 .. p - 1} = {nat a'^i mod p|i . i \<in> (UNIV :: nat set)}"
-    proof
-      {
-        fix x
-        assume x: "x\<in>{1..p - 1}"
-        obtain i where  "x = nat (a'^i mod (int p))" using set_eq x by blast
-        hence "x = nat a'^i mod p" using a' mod_nat_int `p\<ge>2`by auto
-        hence "x \<in> {nat a'^i mod p|i . i \<in> (UNIV :: nat set)}" by auto
-      }
-      thus "{1 .. p - 1} \<subseteq> {nat a'^i mod p|i . i \<in> (UNIV :: nat set)}" by auto
-      next
-      {
-        fix x
-        assume x:"x \<in> {nat a'^i mod p|i . i \<in> (UNIV :: nat set)}"
-        then obtain i where "x = nat a'^i mod p" by auto
-        hence "x = nat (a'^i mod (int p))" using a' mod_nat_int `p\<ge>2`by auto
-        hence "x \<in> {1 .. p - 1}" using set_eq by auto
-      }
-      thus "{nat a'^i mod p|i . i \<in> (UNIV :: nat set)} \<subseteq> {1 .. p - 1}" by fast
-    qed
-   obtain a where "a = nat a'" by auto
-   hence "{1 .. p - 1} = {a^i mod p|i . i \<in> (UNIV :: nat set)}" using `{1 .. p - 1} = {nat a'^i mod p|i . i \<in> (UNIV :: nat set)}` by auto
-   have "a \<in> {1 .. p - 1}" using `{1 .. p - 1} = nat \` {1 .. int p - 1}` a' by (metis `a = nat a'` imageI)
-   then have a:"a \<in> {1 .. p - 1} \<and> {1 .. p - 1} = {a^i mod p|i . i \<in> (UNIV :: nat set)}" using `{1 .. p - 1} = {a^i mod p|i . i \<in> (UNIV :: nat set)}` by auto
-   *)
    obtain a where a:"a \<in> {1 .. p - 1} \<and> {1 .. p - 1} = {a^i mod p|i . i \<in> (UNIV :: nat set)}" using residue_prime_mult_group_has_gen[of p] 1 by blast
   {
    {
@@ -1124,10 +1043,6 @@ theorem lehmer_backwards:
     qed
     hence gen_eq:"{1 .. p - 1} = {a^i mod p | i::nat . 1\<le> i \<and> i \<le> x}" using a by auto
     have "card {1 .. p - 1} = p - 1" by auto
-    (*
-    have "residues_prime (int p)" using `prime (int p)` residues_prime_def[of "int p"] by auto
-    have card_res:"card (carrier (residue_ring (int p))) = p" using `residues (int p)` Residues.residues.res_carrier_eq[of "int p"] by auto
-    *)
     have "{a^i mod p | i::nat . i \<in> {1..x}} = (\<lambda> i. a^i mod p) ` ({1..x}::nat set)" by auto
     hence "card {a^i mod p | i::nat . 1 \<le> i \<and> i \<le> x} = card ((\<lambda> i. a^i mod p) ` ({1..x}::nat set))" by auto
     hence "card {a^i mod p | i::nat . 1 \<le> i \<and> i \<le> x} \<le> p - 2" using Finite_Set.card_image_le[of "{1..x}" "\<lambda> i. a^i mod p"] x by auto
@@ -1143,15 +1058,6 @@ theorem lehmer_backwards:
     hence "coprime (int a) (int p)" by (metis int_1 transfer_int_nat_gcd(1))
     have "phi (int p) = p - 1" by (metis (full_types) "1" nat_int phi_prime prime_int_def)
     hence "[a^(p - 1) = 1] (mod p)" using euler_theorem[of "int p" "int a"] `coprime (int a) (int p)`  by (metis of_nat_0_le_iff of_nat_1 of_nat_power transfer_int_nat_cong)
-    (*
-    next
-    assume "\<not> p \<ge> 3"
-      hence "p < 3" by auto
-      have "p \<ge> 2" using prime_gt_1_nat 1 by auto
-      hence "p = 2" using `p < 3` by linarith
-      hence "[1 ^ (p - 1) = 1] (mod p) \<and> (\<forall> x . 0 < x \<longrightarrow> x \<le> p - 2 \<longrightarrow> [1^x \<noteq> 1] (mod p))" by auto
-      thus ?thesis by blast
-     *)
   }
   moreover
   {
@@ -1223,9 +1129,6 @@ proof
   then
   show "prime_factors p \<subseteq> {p}" by auto
 qed
-
-lemma prime_factors_prime_backwards: fixes p :: nat assumes "prime_factors p = {p}" shows "prime p"
-by (metis assms insertI1 prime_factors_prime_nat)
 
 theorem pratt1:
   assumes 1: "verify_pratt c"
@@ -1349,13 +1252,6 @@ lemma concat_set:
  case (Cons y ys)
   thus ?case by auto
  qed
-
-lemma hd_elem: 
-  fixes "x"::'a
-  fixes  "l"::"'a list"
-  assumes "l \<noteq> []"
-  assumes "x = hd l"
-  shows "x \<in> set l" by (metis assms(1) assms(2) hd_in_set)
 
 lemma set_list:
   fixes "q"::nat
