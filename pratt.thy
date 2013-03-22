@@ -10,14 +10,6 @@ find_theorems "field"
 
 type_synonym cert = "pratt list"
 
-lemma dvd_prime_eq_prime :
- fixes p::nat
- assumes "prime p"
- assumes "q \<noteq> 1"
- assumes "q dvd p"
- shows "q = p"
- using assms by (metis prime_nat_def)
-
 theorem lagrange_ex :
  assumes "group G"
  assumes "finite(carrier G)" 
@@ -181,112 +173,6 @@ lemma (in group) finite_group_elem_finite_ord :
   thus ?thesis using x_d by auto
  qed
 
-(*
-theorem residue_prime_has_gen:
- assumes p:"residues p"
- assumes prime_p: "prime p"
- shows "carrier (residue_ring p) = {2^i mod p|i . i \<in> (UNIV :: nat set)}"
- proof -
-  {
-  fix i::nat
-  have "2^i mod p \<in> carrier (residue_ring p)" using Residues.residues.mod_in_carrier[of p "2^i"] p by auto
- }
- hence subs:"{2 ^ i mod p |i. i \<in> (UNIV :: nat set)} \<subseteq> carrier (residue_ring p)" by auto
- find_theorems "residues_prime"
- (*
- have "ring (residue_ring p)" find_theorems intro  using  p by auto
- have "abelian_group (residue_ring p)" using Residues.residues.abelian_group p by auto
- *) 
- hence group_p:"group (residue_ring p)" sorry
- have sub_p:"subgroup {2^i mod p|i . i \<in> (UNIV :: nat set)} (residue_ring p)" find_theorems intro
-  proof
-    show "{2 ^ i mod p |i. i \<in> (UNIV :: nat set)} \<subseteq> carrier (residue_ring p)" using subs by auto
-   next
-    fix x
-    fix y
-    assume x:"x \<in> {2 ^ i mod p |i. i \<in> (UNIV :: nat set)}"
-    assume y:"y \<in> {2 ^ i mod p |i. i \<in> (UNIV :: nat set)}"
-    obtain i::nat where i:"x = 2 ^ i mod p" and i2:"i \<in> (UNIV :: nat set)"using x by auto
-    obtain j::nat where j:"y = 2 ^ j mod p" and j2:"j\<in>(UNIV :: nat set)"using y by auto
-    hence "x \<otimes>\<^bsub>residue_ring p\<^esub> y = (2^i mod p) \<otimes>\<^bsub>residue_ring p\<^esub> (2 ^ j mod p)" using i by auto
-    hence "x \<otimes>\<^bsub>residue_ring p\<^esub> y = (2^i  * 2^j) mod p" using Residues.residues.mult_cong p by auto
-    hence xy:"x \<otimes>\<^bsub>residue_ring p\<^esub> y = (2^(i+j)) mod p" by (metis power_add)
-    have "i+j \<in> (UNIV :: nat set)" using i2 j2 by auto
-    hence "(2^(i+j)) mod p \<in> {2 ^ i mod p |i. i \<in> (UNIV :: nat set)}" by auto
-    thus "x \<otimes>\<^bsub>residue_ring p\<^esub> y \<in> {2 ^ i mod p |i. i \<in> (UNIV :: nat set)}" using xy by auto
-  next
-    have 1:"\<one>\<^bsub>residue_ring p\<^esub> = 1 mod p" using Residues.residues.one_cong p by auto
-    have "1 mod p= 2^0 mod p" by (metis power_0)
-    hence "1 mod p \<in> {2 ^ i mod p |i. i \<in> (UNIV :: nat set)}" by fastforce
-    thus "\<one>\<^bsub>residue_ring p\<^esub> \<in> {2 ^ i mod p |i. i \<in> (UNIV :: nat set)}" using 1 by auto
-  next
-     fix x
-     assume x:"x \<in> {2 ^ i mod p |i. i \<in> (UNIV :: nat set)}"
-     hence x_in_carrier:"x \<in> carrier (residue_ring p)" using subs by auto
-     have "finite (carrier (residue_ring p))" by (metis p residues.finite)
-     then obtain d::nat where "x (^)\<^bsub>residue_ring p\<^esub> d = \<one>\<^bsub>residue_ring p\<^esub>" and "d\<ge>1"  using group.finite_group_elem_finite_ord[of "residue_ring p" x] x_in_carrier group_p by auto
-     hence x_d:"x ^ d mod p = 1" using p Residues.residues.one_cong Residues.residues.pow_cong by (metis (hide_lams, no_types) group.finite_group_elem_finite_ord group_p mod_0 not_one_le_zero power_eq_0_iff residues.finite residues.mod_in_carrier residues.res_one_eq zero_le_one)
-     hence inv_1:"x^d mod p = (x^(d - 1) * x) mod p" using `d\<ge>1` by (metis comm_semiring_1_class.normalizing_semiring_rules(7) le_0_eq power_eq_0_iff power_eq_if)
-     hence inv_2:"x^d mod p = (x * x^(d - 1)) mod p" by (metis comm_semiring_1_class.normalizing_semiring_rules(7))  
-     have inv_11:"1=(x^(d - 1) * x) mod p" using x_d using inv_1 by auto
-     hence inv_111:"\<one>\<^bsub>residue_ring p\<^esub>=(x^(d - 1) mod p) \<otimes>\<^bsub>residue_ring p\<^esub> (x mod p)" using Residues.residues.mult_cong[of p] p Residues.residues.one_cong[of p] by (metis residues.res_one_eq)
-     have inv_22:"1=(x * x^(d - 1)) mod p" using x_d using inv_2 by auto
-     hence inv_222:"\<one>\<^bsub>residue_ring p\<^esub>=(x mod p) \<otimes>\<^bsub>residue_ring p\<^esub> (x^(d - 1) mod p)" using Residues.residues.mult_cong[of p] p Residues.residues.one_cong[of p] by (metis residues.res_one_eq)
-     have elem:"x ^ (d - 1) mod p \<in> {2 ^ i mod p |i. i \<in> (UNIV :: nat set)}"
-      proof -
-       obtain i::nat where i:"x = 2^i mod p \<and> i \<in> (UNIV :: nat set)" using x by auto
-       hence "x ^ (d - 1) mod p = ((2 ^ i) mod p) ^ (d - 1) mod p" by auto
-       hence "x ^ (d - 1) mod p = (2 ^ i)  ^ (d - 1) mod p" by (metis power_mod)
-       hence 1:"x ^ (d - 1) mod p = 2 ^ (i * (d - 1)) mod p" by (metis power_mult)
-       hence "d - 1 \<in> (UNIV :: nat set)" using `d \<ge> 1` by auto
-       hence "i * (d - 1) \<in> (UNIV :: nat set)" using i by auto
-       thus ?thesis using 1 by auto
-      qed
-      hence "x ^ (d - 1) mod p \<in> carrier (residue_ring p)" by (metis p residues.mod_in_carrier)
-      hence inv:"inv\<^bsub>residue_ring p\<^esub> (x mod p) = x^(d - 1) mod p" using inv_111 inv_222 m_inv_def[of "residue_ring p" "x mod p"] p by (metis comm_monoid.comm_inv_char residues.comm_monoid residues.mod_in_carrier)
-      have "x mod p = x"
-      proof -
-        obtain i where i:"2 ^ i mod p = x" using x by auto
-        hence "x mod p = 2 ^ i mod p mod p " by auto
-        hence "x mod p = 2 ^ i mod p" using mod_mod_trivial by auto
-        thus "x mod p = x" using i by auto
-      qed
-      thus "inv\<^bsub>residue_ring p\<^esub> x \<in> {2 ^ i mod p |i. i \<in> (UNIV :: nat set)}" using elem inv by auto
-   qed
-   have "finite (carrier (residue_ring p))" using p by (metis residues.finite)
-   hence dvds_p:"card {2 ^ i mod p |i. i \<in> (UNIV :: nat set)} dvd order (residue_ring p)" using lagrange_ex sub_p group_p by auto
-   have "p\<ge>2" using prime_p by (metis prime_ge_2_int)
-   hence ord_p:"order (residue_ring p) = nat p" using prime_p Residues.residues.res_carrier_eq[of p] p by (metis card_atLeastAtMost_int diff_add_cancel minus_int_code(1) order_def)
-   have card_ge_2:"card {2 ^ i mod p |i. i \<in> (UNIV :: nat set)} \<ge> 2" using `p\<ge>2`
-     proof -
-      have "\<one>\<^bsub>residue_ring p\<^esub> \<in> {2 ^ i mod p |i. i \<in> (UNIV :: nat set)}" using sub_p Group.subgroup.one_closed by auto
-      hence 1 : "1 \<in> {2 ^ i mod p | i . i \<in> (UNIV :: nat set)}" using p residues.res_one_eq by auto
-      {
-        assume "2 = p"
-        hence "2 ^ 1 mod p = 0" by auto
-        hence "0 \<in> {2 ^ i mod p | i . i \<in> (UNIV :: nat set)}" by (metis (lifting, full_types) UNIV_I mem_Collect_eq)
-      }
-      moreover
-      {
-        assume "p>2"
-        hence "2 ^ 1 mod p = 2" by auto
-        hence "2 \<in> {2 ^ i mod p | i . i \<in> (UNIV :: nat set)}" by (metis (lifting, full_types) UNIV_I mem_Collect_eq)
-      }
-      ultimately obtain a where a:"a\<in> {2 ^ i mod p |i. i \<in> (UNIV :: nat set)} \<and> (a = 0 | a = 2)" using `p \<ge> 2` by fastforce
-      hence "a \<noteq> 1" by auto
-      hence subs:"{a,1} \<subseteq> {2 ^ i mod p |i. i \<in> (UNIV :: nat set)}" using a 1 by auto
-      have "card {a,1} = 2" using `a \<noteq> 1` by auto
-      have "{2 ^ i mod p | i . i \<in> (UNIV :: nat set)} \<subseteq> {0 .. p - 1}" using `p\<ge>2` by auto
-      hence "finite {2 ^ i mod p | i . i \<in> (UNIV :: nat set)}" using finite_subset  by auto
-      thus ?thesis using subs `card {a,1} = 2` Finite_Set.card_mono[of "{2 ^ i mod p | i . i \<in> (UNIV :: nat set)}" "{a,1}"] by auto
-     qed
-   have "prime (nat p)" using prime_p by (metis prime_int_def)
-   hence "card {2 ^ i mod p |i. i \<in> (UNIV :: nat set)} = nat p" using dvds_p dvd_prime_eq_prime ord_p card_ge_2 by auto
-   hence "card {2 ^ i mod p |i. i \<in> (UNIV :: nat set)} \<ge> card (carrier (residue_ring p))" using ord_p order_def[of "residue_ring p"] by auto
-   thus ?thesis using  subs card_seteq[of "carrier (residue_ring p)" "{2 ^ i mod p |i. i \<in> (UNIV :: nat set)}"] `finite (carrier (residue_ring p))` by auto
- qed
-*)
-
 lemma dvd_nat_bounds :
  fixes n :: nat
  fixes p :: nat
@@ -297,11 +183,6 @@ lemma dvd_nat_bounds :
   show "n > 0" using assms by (metis dvd_pos_nat)
   show "n \<le> p" using assms by (metis dvd_imp_le)
  qed
-
-(*
-theorem (in field) field_mult_group_has_gen :
- shows "\<exists> a. a \<in> carrier R - {\<zero>} \<and> carrier R - {\<zero>} = {a (^) i | i . i \<in> (UNIV :: nat set)}" sorry
-*)
 
 definition ord where "ord a p = Min {d . d\<in> {1 .. p} \<and> (a ^ d) mod p = 1}"
 
@@ -320,23 +201,6 @@ lemma (in comm_monoid) is_monoid:
   shows "monoid G" by unfold_locales
 
 declare comm_monoid.is_monoid[intro?]
-
-lemma atLeastAtMost_nat:
-  fixes m n :: nat
-  shows "nat ` {1 .. int n} = {1 .. n}" (is "?L = ?R")
-proof
-  { fix x :: nat
-    assume "x\<in>{1 .. n}"
-    hence "int x \<in> {1 .. int n}" by auto
-    hence "nat (int x) \<in> nat ` {1 .. int n}" by blast
-    hence "x \<in> nat ` {1 .. int n}" by simp
-  } thus "?R \<subseteq> ?L" ..
-next
-  { fix x :: nat
-    assume x : "x \<in> nat ` {1 .. int n}"
-    hence "x \<in> {1 .. n}" by auto
-  } thus "?L \<subseteq> ?R" ..
-qed
 
 lemma p_prime_impl_mult_group_closed :
   fixes p :: nat
@@ -1212,8 +1076,6 @@ fun build_fpc' :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat lis
   "build_fpc' p a r [] = [Triple p a r]" |
   "build_fpc' p a r (y # ys) = Triple p a r # build_fpc' p a (r div y) ys"
 
-abbreviation (input) "build_fpc p a ys \<equiv> build_fpc' p a (p - 1) ys"
-
 definition "listprod \<equiv> \<lambda>xs. foldr (op *) xs 1"
 
 lemma listprod_Nil[simp]: "listprod [] = 1" by (simp add: listprod_def)
@@ -1399,11 +1261,12 @@ proof -
   have cs_3: "\<forall>q \<in> prime_factors (p - 1) . (\<exists>c \<in> set cs . ((Prime q \<in> set c) \<and> (verify_pratt c)))" using cs'_1 cs_1 by auto
   have "\<forall> x \<in> set cs . verify_pratt x" using cs'_1 cs_1 by auto
   then have c_fpc1:"verify_pratt (concat cs)" using concat_verify [of "cs"] by blast
-  have c_fpc2: "\<forall> q \<in> set qs' . [a^((p - 1) div q) \<noteq> 1] (mod p)" using Kasgrilla2 Grillwurst 3 by auto
-  have c_fpc3: "\<forall> q \<in> set qs' . Prime q \<in> set (concat cs)" using concat_set cs_3 Kasgrilla2 by auto
-  then have Weisswurst2:"verify_pratt ((build_fpc p a qs')@concat cs)"
-    using `_ > 0` correct_fpc[OF c_fpc1 Kasgrilla' _ c_fpc3 c_fpc2] by simp
-  have "(Triple p a (p - 1)) \<in> set ((build_fpc p a qs')@concat cs)" by (cases qs') auto
+  have c_fpc2: "\<forall> q \<in> set qs' . Prime q \<in> set (concat cs)" using concat_set cs_3 Kasgrilla2 by auto
+  have c_fpc3: "\<forall> q \<in> set qs' . [a^((p - 1) div q) \<noteq> 1] (mod p)" using Kasgrilla2 Grillwurst 3 by auto
+
+  have Weisswurst2:"verify_pratt ((build_fpc' p a (p - 1) qs')@concat cs)"
+    using `_ > 0` correct_fpc[OF c_fpc1 Kasgrilla' _ c_fpc2 c_fpc3] by simp
+  have "(Triple p a (p - 1)) \<in> set ((build_fpc' p a (p - 1) qs')@concat cs)" by (cases qs') auto
   then show ?thesis using Weisswurst2 by blast
 qed
 
