@@ -102,7 +102,7 @@ proof -
   { fix d
     assume d:"d dvd n"
     have "card {a * n div d | a . 1 \<le> a \<and> a \<le> d \<and> gcd a d = 1}
-          = card {a . 1 \<le> a \<and> a \<le> d \<and> gcd a d = 1}" using inj_on_def
+          = card {a . 1 \<le> a \<and> a \<le> d \<and> gcd a d = 1}"
     proof -
       {
         fix x y assume "x * n div d =  y * n div d"
@@ -708,7 +708,7 @@ proof -
     { fix x assume x:"x \<in> carrier (mult_of R)"
       hence x':"x\<in>carrier (mult_of R)" by simp
       then have "group.ord (mult_of R) x dvd order (mult_of R)"
-        using finite' G.ord_dvd_group_order[OF _ x'] by (simp add: order_mult_of)
+          using finite' G.ord_dvd_group_order[OF _ x'] by (simp add: order_mult_of)
       hence "x \<in> UNION ?L ?f" using dvd_nat_bounds[of "order (mult_of R)" "group.ord (mult_of R) x"] x by blast
     } thus "carrier (mult_of R) \<subseteq> UNION ?L ?f" by blast
   qed auto
