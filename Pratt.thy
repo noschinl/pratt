@@ -396,6 +396,10 @@ lemma concat_length_le:
   shows "length (concat (map f xs)) \<le> (\<Sum> x \<leftarrow> xs . g x)" using assms
   by (induction xs) force+
 
+(* XXX move *)
+lemma powr_realpow_numeral: "0 < x ==> x powr (numeral n :: real) = x^(numeral n)"
+  unfolding real_of_nat_numeral[symmetric] by (rule powr_realpow)
+
 lemma prime_gt_3_impl_p_minus_one_not_prime:
   fixes p::nat
   assumes "prime p" "p>3"
@@ -413,24 +417,19 @@ theorem pratt_complete:
   shows "\<exists>c. Prime p \<in> set c \<and> verify_pratt c \<and> length c \<le> 6*log 2 p - 4" using assms
 proof (induction p rule: less_induct)
   case (less p)
-    { assume "p == 2"
-      have "Prime p \<in> set [Prime 2, Triple 2 1 1]" using `p==2` by simp
-      hence ?case using `p==2` by fastforce
-    }
+    { assume [simp]: "p = 2"
+      have "Prime p \<in> set [Prime 2, Triple 2 1 1]" by simp
+      then have ?case by fastforce }
     moreover
-    { assume "p == 3"
-      have correct:"verify_pratt [Prime 3, Triple 3 2 2, Triple 3 2 1, Prime 2, Triple 2 1 1]"
-        by (fastforce simp add: cong_nat_def)
-      have "length [Prime 3, Triple 3 2 2, Triple 3 2 1, Prime 2, Triple 2 1 1] \<le> 6*log 2 p - 4
+    { assume [simp]: "p = 3"
+      let ?cert = "[Prime 3, Triple 3 2 2, Triple 3 2 1, Prime 2, Triple 2 1 1]"
+
+      have "length ?cert \<le> 6*log 2 p - 4
             \<longleftrightarrow> 2 powr 9 \<le> 2 powr (log 2 p * 6)" by auto
-      also have "\<dots> \<longleftrightarrow> 2 powr 9 \<le> 3 powr 6" using `p==3` by (simp add: powr_powr[symmetric])
-      ultimately have len_le:"length [Prime 3, Triple 3 2 2, Triple 3 2 1, Prime 2, Triple 2 1 1]
-                              \<le> 6*log 2 p - 4"
-                              using Log.powr_realpow[of "2::nat" "9::nat"]
-                                    Log.powr_realpow[of "3::nat" "6::nat"] by force
-      have "Prime p \<in> set [Prime 3, Triple 3 2 2, Triple 3 2 1, Prime 2, Triple 2 1 1]" using `p==3`
-        by force
-      hence ?case using correct len_le by blast
+      also have "\<dots> \<longleftrightarrow> True"
+        by (simp add: powr_powr[symmetric] powr_realpow_numeral)
+      finally have ?case
+        by (intro exI[where x="?cert"]) (simp add: cong_nat_def)
      }
      moreover
      { assume "p > 3"
