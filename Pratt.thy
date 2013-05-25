@@ -369,28 +369,6 @@ proof (induct n rule: less_induct)
     
 qed
 
-lemma listsum_add_distr:
-  "(\<Sum> x \<leftarrow> xs . (f:: 'a \<Rightarrow> real) x + g x) = (\<Sum> x \<leftarrow> xs . f x) + (\<Sum> x \<leftarrow> xs. g x)"
-  by (induction xs) auto
-
-lemma listsum_triv: 
-  "(\<Sum> x \<leftarrow> xs . n) = n*real (length xs)"
-proof (induction xs)
-  case Nil
-    thus ?case by simp
-  next
-  case (Cons y ys)
-    have "n*real (length (y#ys)) = n * (1 + real (length ys))" by simp
-    also have "\<dots> = n + n*real (length ys)"
-      by (simp add: comm_semiring_1_class.normalizing_semiring_rules(34))
-    ultimately show ?case using Cons by simp
-qed
-
-lemma listsum_const_factor:
-  fixes c::real
-  shows "(\<Sum> x \<leftarrow> xs . c * g x) = c*(\<Sum> x \<leftarrow> xs . g x)"
-  by (induction xs) (simp add: comm_semiring_1_class.normalizing_semiring_rules(34))+
-
 lemma listprod_ge:
   fixes xs::"nat list"
   assumes "\<forall> x \<in> set xs . x \<ge> 1"
@@ -417,10 +395,6 @@ lemma concat_length_le:
   assumes "\<forall> x \<in> set xs . real (length (f x)) \<le> g x"
   shows "length (concat (map f xs)) \<le> (\<Sum> x \<leftarrow> xs . g x)" using assms
   by (induction xs) force+
-
-lemma listsum_map_real:
-  "(\<Sum> x \<leftarrow> xs . (f::real \<Rightarrow> real) (real x)) = (\<Sum> x \<leftarrow> map real xs. f x)"
-  by (induction xs) simp+
 
 lemma prime_gt_3_impl_p_minus_one_not_prime:
   fixes p::nat
@@ -502,13 +476,6 @@ proof (induction p rule: less_induct)
        moreover
        { let ?k = "length qs"
 
-         have "(\<Sum> q \<leftarrow> qs . 6*log 2 q + (\<lambda> x. -4) q)
-               = (\<Sum> q \<leftarrow> qs . 6*log 2 q) + (\<Sum> q \<leftarrow> (map real qs) . (\<lambda> x. -4) q)"
-               using listsum_add_distr by fast
-         hence sum_distr:"(\<Sum> q \<leftarrow> qs . 6*log 2 q - 4) + ?k + 2
-                  = (\<Sum> q \<leftarrow> qs . 6*log 2 q) + (\<Sum> q \<leftarrow> (map real qs) . -4) + ?k + 2"
-                  by (fastforce simp add: ab_diff_minus)
-         
          have qs_ge_2:"\<forall>q \<in> set qs . q \<ge> 2" using qs_eq
           by (simp add: prime_factors_prime_nat prime_ge_2_nat)
 
@@ -517,10 +484,9 @@ proof (induction p rule: less_induct)
           by fast
          hence "length (Prime p # ((build_fpc p a (p - 1) qs)@ concat ?cs))
                 \<le> ((\<Sum> q \<leftarrow> (map real qs) . 6*log 2 q - 4) + ?k + 2)"
-                by (simp add: listsum_map_real[of "\<lambda>q. 6*log 2 q - 4"] length_fpc)
+                by (simp add: o_def length_fpc)
          also have "\<dots> = (6*(\<Sum> q \<leftarrow> (map real qs) . log 2 q) + (-4 * real ?k) + ?k + 2)"
-          using listsum_triv[of "-4" "map real qs"]
-                listsum_const_factor[of 6 "log 2" "(map real qs)"] sum_distr by fastforce
+           by (simp add: o_def listsum_subtractf listsum_triv real_of_nat_def listsum_const_mult)
          also have "\<dots> \<le> 6*log 2 (p - 1) - 4" using `?k\<ge>2` prod_qs_eq listsum_log[of 2 qs] qs_ge_2 
           by force
          also have "\<dots> \<le> 6*log 2 p - 4" using Log.log_le_cancel_iff[of 2 "p - 1" p] `p>3` by force
