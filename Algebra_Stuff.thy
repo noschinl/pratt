@@ -56,9 +56,6 @@ proof -
   thus ?thesis unfolding phi'_def by simp
 qed 
 
-find_theorems "inj_on" "card"
-find_theorems "_ div _ > 0"
-
 lemma dvd_div_eq_1:
   fixes a b c :: nat
   assumes "c dvd a" "c dvd b" "a div c = b div c"
@@ -75,12 +72,6 @@ lemma dvd_div_eq_2:
   also have "\<dots> = b*(c div a)" using assms dvd_mult_div_cancel by fastforce
   finally show "a = b" using `c>0` dvd_div_ge_1[OF _ `a dvd c`] by fastforce
 qed
-
-find_theorems "_ div _ \<le> _ div _"
-
-lemma bla:
-  fixes a b c :: nat
-  shows "a * b div c \<ge> a * (b div c)" using Divides.div_mult1_eq[of a b c] by linarith
 
 lemma div_mult_mono:
   fixes a b c :: nat
@@ -628,7 +619,7 @@ context field begin
 
 lemma num_elems_of_ord_eq_phi':
   assumes finite: "finite (carrier R)" and dvd: "d dvd order (mult_of R)"
-    and exists: "\<exists>a\<in>carrier (mult_of R). group.ord (mult_of R) a = d"
+      and exists: "\<exists>a\<in>carrier (mult_of R). group.ord (mult_of R) a = d"
   shows "card {a \<in> carrier (mult_of R). group.ord (mult_of R) a = d} = phi' d"
 proof -
   note mult_of_simps[simp]
@@ -637,168 +628,59 @@ proof -
   interpret G:group "mult_of R" where "op (^)\<^bsub>mult_of R\<^esub> = (op (^) :: _ \<Rightarrow> nat \<Rightarrow> _)" and "\<one>\<^bsub>mult_of R\<^esub> = \<one>"
     by (rule field_mult_group) simp_all
 
-  let ?N = "\<lambda> x . card {a . a \<in> carrier (mult_of R) \<and> group.ord (mult_of R) a  = x}"
-  have *:"0 < order (mult_of R)"
-    unfolding order_mult_of[OF finite] using card_mono[OF finite, of "{\<zero>, \<one>}"] by (simp add: order_def)
-  have fin: "finite {d. d dvd order (mult_of R) }" using dvd_nat_bounds[OF *] by force
-
   from exists
-  obtain a where a':"a \<in> carrier (mult_of R)" and ord_a: "group.ord (mult_of R) a = d" by (auto simp add: card_gt_0_iff)
-  have d_neq_0:"d\<noteq>0" using * by (simp add : dvd_pos_nat[OF _ `d dvd order (mult_of R)`])
-  have "{x . x \<in> carrier (mult_of R) \<and> x (^) d = \<one>} \<subseteq> {x . x \<in> carrier R \<and> x (^) d = \<one>}" by auto
-  hence "card {x . x \<in> carrier (mult_of R) \<and> x (^) d = \<one>} \<le> card {x . x \<in> carrier R \<and> x (^) d = \<one>}" using card_mono[of _ "{x . x \<in> carrier (mult_of R) \<and> x (^) d = \<one>}"] finite by force
-  hence card_le_d : "card {x . x \<in> carrier (mult_of R) \<and> x (^) d = \<one>} \<le> d" 
-      using num_roots_le_deg[OF finite d_neq_0] by simp
+  obtain a where a:"a \<in> carrier (mult_of R)" and ord_a: "group.ord (mult_of R) a = d"
+    by (auto simp add: card_gt_0_iff)
 
-  have finite_roots: "finite {x . x \<in> carrier (mult_of R) \<and> x (^) d = \<one>}" using finite by auto
-  have subs:"{a(^)n| n . n \<in> {0 ..d - 1}} \<subseteq> {x . x \<in> carrier (mult_of R) \<and> x(^)d = \<one>}"
-  proof
-    fix x assume "x \<in> {a(^)n| n . n \<in> {0 .. d - 1}}"
-    then obtain n where n:"x = a(^)n \<and> n \<in> {0 .. d - 1}" by auto
-    hence x_bounds:"x \<in> carrier R" using a' by fastforce
-    have a_d:"a(^)d = \<one>" using ord_a G.pow_ord_eq_1[OF finite' a'] a' by metis
-    have "x(^)d = a(^)(n*d)" using n a' ord_a by (simp add:nat_pow_pow)
-    have "x(^)d = (a(^)d)(^)n" using n a' by (simp add:nat_mult_commute nat_pow_pow)
-    hence x_d:"x(^)d = \<one>" using a_d by simp
-    have "x \<in> carrier (mult_of R)" using G.nat_pow_closed[OF a'] n a' by auto
-    thus "x \<in> {x . x \<in> carrier (mult_of R) \<and> x(^)d = \<one>}" using x_d by blast
+  have set_eq1:"{a(^)n| n . n \<in> {1 .. d}} = {x. x \<in> carrier (mult_of R) \<and> x (^) d = \<one>}"
+  proof (rule card_seteq)
+    show "finite {x . x \<in> carrier (mult_of R) \<and> x (^) d = \<one>}" using finite by auto
+    
+    show "{a(^)n| n . n \<in> {1 ..d}} \<subseteq> {x . x \<in> carrier (mult_of R) \<and> x(^)d = \<one>}"
+    proof
+      fix x assume "x \<in> {a(^)n| n . n \<in> {1 .. d}}"
+      then obtain n where n:"x = a(^)n \<and> n \<in> {1 .. d}" by auto
+      have "x(^)d =(a(^)d)(^)n" using n a ord_a by (simp add:nat_pow_pow nat_mult_commute)
+      hence "x(^)d = \<one>" using ord_a G.pow_ord_eq_1[OF finite' a] by fastforce
+      thus "x \<in> {x. x \<in> carrier (mult_of R) \<and> x(^)d = \<one>}" using G.nat_pow_closed[OF a] n by blast
+    qed
+
+    show "card {x . x \<in> carrier (mult_of R) \<and> x (^) d = \<one>} \<le> card {a(^)n| n . n \<in> {1 .. d}}"
+    proof -
+      have *:"{a(^)n| n . n \<in> {1 .. d }} = ((\<lambda> n. a(^)n) ` {1 .. d})" by auto
+      have "0 < order (mult_of R)" unfolding order_mult_of[OF finite]
+        using card_mono[OF finite, of "{\<zero>, \<one>}"] by (simp add: order_def)
+      have "card {x . x \<in> carrier (mult_of R) \<and> x (^) d = \<one>} \<le> card {x . x \<in> carrier R \<and> x (^) d = \<one>}"
+        using card_mono[of "{x . x \<in> carrier R \<and> x (^) d = \<one>}"
+                           "{x . x \<in> carrier (mult_of R) \<and> x (^) d = \<one>}"] finite by force
+      also have "\<dots> \<le> d" using `0 < order (mult_of R)` num_roots_le_deg[OF finite, of d]
+        by (simp add : dvd_pos_nat[OF _ `d dvd order (mult_of R)`])
+      finally show ?thesis using G.ord_inj'[OF finite' a] ord_a * by (simp add: card_image)
+    qed
   qed
-  have inj:"inj_on (\<lambda> n. a(^)n) {0 .. d - 1}"
-    using G.ord_inj[OF finite' a'] ord_a by simp
-  have "{a(^)n| n . n \<in> {0 .. d - 1}} = ((\<lambda> n. a(^)n) ` {0 .. d - 1})" by auto
-  hence cards_eq:"card {a(^)n| n . n \<in> {0 .. d - 1}} = card {0 .. d - 1}" using inj
-    by (simp add: card_image)
-  have "card {0 .. d - 1} = d" using `d dvd order (mult_of R)` *
-    by (simp add: dvd_nat_bounds[of "order (mult_of R)" d])
-  hence "card {a(^)n| n . n \<in> {0 .. d - 1}} = d" using cards_eq by auto
-  hence set_eq1:"{a(^)n| n . n \<in> {0 .. d - 1}} = {x. x \<in> carrier (mult_of R) \<and> x (^) d = \<one>}" 
-    using card_seteq[OF finite_roots subs] card_le_d by presburger
 
   have set_eq2:"{x \<in> carrier (mult_of R) . group.ord (mult_of R) x = d} 
-                = {a(^)n| n . n \<in> {1 .. d} \<and> group.ord (mult_of R) (a(^)n) = d}" (is "?L = ?R")
+                = (\<lambda> n . a(^)n) ` {n . n \<in> {1 .. d} \<and> group.ord (mult_of R) (a(^)n) = d}" (is "?L = ?R")
   proof
     { fix x assume x:"x \<in> (carrier (mult_of R)) \<and> group.ord (mult_of R) x = d"
-      hence "x (^) d = \<one>"
+      hence "x \<in> {x. x \<in> carrier (mult_of R) \<and> x (^) d = \<one>}" using x
         by (simp add: G.pow_ord_eq_1[OF finite', of x, symmetric])
-      hence "x \<in> {x. x \<in> carrier (mult_of R) \<and> x (^) d = \<one>}" using x by simp
-      then obtain n where n:"x = a(^)n \<and> n \<in> {0 .. d - 1}" using set_eq1 by blast
-      def n' \<equiv> "if n = 0 then d else n" 
-      have n'1:"n' \<in> {1 .. d}" using n dvd_nat_bounds[OF _ `d dvd order (mult_of R)`] *
-        by (auto simp add: n'_def)
-      have "x = a(^)n'" unfolding n'_def using a' ord_a n
-            by (simp add: G.pow_ord_eq_1[OF finite', of a, symmetric])
-      hence "x \<in> ?R" using x n'1 by fast
-    } thus "?L \<subseteq> ?R" by blast
-    show "?R \<subseteq> ?L" using a' by (auto simp add: carrier_mult_of[symmetric] simp del: carrier_mult_of)
-  qed
-
-  { fix i j :: nat assume i : "i \<in> {1 .. d}" assume j : "j \<in> {1 .. d}"
-    assume ij : "a(^)i= a(^)j" assume "i = d" "j \<noteq> d"
-    hence j':"j \<in> {0 .. d - 1}" using j by auto
-    have "a(^)j = a(^)(0::nat)" using ord_a
-      by (simp add: ij[symmetric] `i=d` G.pow_ord_eq_1[OF finite' a', symmetric] a') 
-    hence "j = 0" using inj inj_on_def[of "\<lambda>n. a (^) n" "{0 .. d - 1}"] j' by auto
-    hence "i = j" using j by simp
-  } note i_eq_d_j_neq_d = this
-  { fix i j :: nat assume i : "i \<in> {1 .. d}" assume j : "j \<in> {1 .. d}"
-    assume ij : "a(^)i = a(^)j"
-    { assume "j \<noteq> d" "i \<noteq> d"
-      hence i':"i \<in> {0 .. d - 1}" using i by force
-      have "j \<in> {0 .. d - 1}" using j `j\<noteq>d` by fastforce
-      hence "i = j" using ij i' inj inj_on_def[of "(\<lambda>n. a (^) n)" "{0..d - 1}"] by blast
-    } hence "i = j" using i_eq_d_j_neq_d[OF j i] i_eq_d_j_neq_d[OF i j ij] ij by force
-  }  hence inj2:"inj_on (\<lambda> n . a(^)n) {1 .. d}" using inj_on_def by blast
-  hence inj3:"inj_on (\<lambda> n . a(^)n) {n . n \<in> {1 .. d} \<and> group.ord (mult_of R) (a(^)n) = d}"
-    using inj_on_def[of "\<lambda> n . a(^)n" "{1 .. d}"] unfolding inj_on_def by fast
-  hence card_proj_eq: "card ((\<lambda> n . a(^)n) ` {n . n \<in> {1 .. d} \<and> group.ord (mult_of R) (a(^)n) = d})
-                       = card {k . k \<in> {1 .. d} \<and> group.ord (mult_of R) (a(^)k) = d}"
-                       using card_image[OF inj3] by fast
-  have "{a(^)n| n . n \<in> {1 .. d} \<and> group.ord (mult_of R) (a(^)n) = d}
-        = (\<lambda> n . a(^)n) ` {n . n \<in> {1 .. d} \<and> group.ord (mult_of R) (a(^)n) = d}" by blast
-  hence card_proj_eq2:"card {a(^)n| n . n \<in> {1 .. d} \<and> group.ord (mult_of R) (a(^)n) = d}
-                       = card {k . k \<in> {1 .. d} \<and> group.ord (mult_of R) (a(^)k) = d}" 
-                      using card_proj_eq by presburger
-  show "?N d = phi' d"
-    using set_eq2 card_proj_eq2 G.pow_ord_eq_ord_iff[OF finite' `a \<in> _`, unfolded ord_a]
-    by (simp add: phi'_def)
-qed
-
-lemma N_d_eq_phi'_d': (* XXX rename *)
-  assumes finite: "finite (carrier R)" and dvd: "d dvd order (mult_of R)"
-    and exists: "\<exists>a\<in>carrier (mult_of R). group.ord (mult_of R) a = d"
-  shows "card {a \<in> carrier (mult_of R). group.ord (mult_of R) a = d} = phi' d"
-proof -
-  note mult_of_simps[simp]
-  have finite': "finite (carrier (mult_of R))" using finite by (rule finite_mult_of)
-
-  interpret G:group "mult_of R" where "op (^)\<^bsub>mult_of R\<^esub> = (op (^) :: _ \<Rightarrow> nat \<Rightarrow> _)" and "\<one>\<^bsub>mult_of R\<^esub> = \<one>"
-    by (rule field_mult_group) simp_all
-
-  let ?N = "\<lambda> x . card {a . a \<in> carrier (mult_of R) \<and> group.ord (mult_of R) a  = x}"
-  have *:"0 < order (mult_of R)"
-    unfolding order_mult_of[OF finite] using card_mono[OF finite, of "{\<zero>, \<one>}"] by (simp add: order_def)
-  have fin: "finite {d. d dvd order (mult_of R) }" using dvd_nat_bounds[OF *] by force
-
-  from exists
-  obtain a where a':"a \<in> carrier (mult_of R)" and ord_a: "group.ord (mult_of R) a = d" by (auto simp add: card_gt_0_iff)
-  have d_neq_0:"d\<noteq>0" using * by (simp add : dvd_pos_nat[OF _ `d dvd order (mult_of R)`])
-  have "{x . x \<in> carrier (mult_of R) \<and> x (^) d = \<one>} \<subseteq> {x . x \<in> carrier R \<and> x (^) d = \<one>}" by auto
-  hence "card {x . x \<in> carrier (mult_of R) \<and> x (^) d = \<one>} \<le> card {x . x \<in> carrier R \<and> x (^) d = \<one>}" using card_mono[of _ "{x . x \<in> carrier (mult_of R) \<and> x (^) d = \<one>}"] finite by force
-  hence card_le_d : "card {x . x \<in> carrier (mult_of R) \<and> x (^) d = \<one>} \<le> d" 
-      using num_roots_le_deg[OF finite d_neq_0] by simp
-
-  have finite_roots: "finite {x . x \<in> carrier (mult_of R) \<and> x (^) d = \<one>}" using finite by auto
-  have subs:"{a(^)n| n . n \<in> {1 ..d}} \<subseteq> {x . x \<in> carrier (mult_of R) \<and> x(^)d = \<one>}"
-  proof
-    fix x assume "x \<in> {a(^)n| n . n \<in> {1 .. d}}"
-    then obtain n where n:"x = a(^)n \<and> n \<in> {1 .. d}" by auto
-    hence x_bounds:"x \<in> carrier R" using a' by fastforce
-    have a_d:"a(^)d = \<one>" using ord_a G.pow_ord_eq_1[OF finite' a'] a' by metis
-    have "x(^)d = a(^)(n*d)" using n a' ord_a by (simp add:nat_pow_pow)
-    have "x(^)d = (a(^)d)(^)n" using n a' by (simp add:nat_mult_commute nat_pow_pow)
-    hence x_d:"x(^)d = \<one>" using a_d by simp
-    have "x \<in> carrier (mult_of R)" using G.nat_pow_closed[OF a'] n a' by auto
-    thus "x \<in> {x . x \<in> carrier (mult_of R) \<and> x(^)d = \<one>}" using x_d by blast
-  qed
-  have inj:"inj_on (\<lambda> n. a(^)n) {1 .. d}"
-    using G.ord_inj'[OF finite' a'] ord_a by simp
-  have "{a(^)n| n . n \<in> {1 .. d }} = ((\<lambda> n. a(^)n) ` {1 .. d})" by auto
-  hence cards_eq:"card {a(^)n| n . n \<in> {1 .. d}} = card {1 .. d}" using inj
-    by (simp add: card_image)
-  have "card {1 .. d} = d" using `d dvd order (mult_of R)` *
-    by (simp add: dvd_nat_bounds[of "order (mult_of R)" d])
-  hence "card {a(^)n| n . n \<in> {1 .. d }} = d" using cards_eq by auto
-  hence set_eq1:"{a(^)n| n . n \<in> {1 .. d}} = {x. x \<in> carrier (mult_of R) \<and> x (^) d = \<one>}" 
-    using card_seteq[OF finite_roots subs] card_le_d by presburger
-
-  have set_eq2:"{x \<in> carrier (mult_of R) . group.ord (mult_of R) x = d} 
-                = {a(^)n| n . n \<in> {1 .. d} \<and> group.ord (mult_of R) (a(^)n) = d}" (is "?L = ?R")
-  proof
-    { fix x assume x:"x \<in> (carrier (mult_of R)) \<and> group.ord (mult_of R) x = d"
-      hence "x (^) d = \<one>"
-        by (simp add: G.pow_ord_eq_1[OF finite', of x, symmetric])
-      hence "x \<in> {x. x \<in> carrier (mult_of R) \<and> x (^) d = \<one>}" using x by simp
       then obtain n where n:"x = a(^)n \<and> n \<in> {1 .. d}" using set_eq1 by blast
       hence "x \<in> ?R" using x by fast
     } thus "?L \<subseteq> ?R" by blast
-    show "?R \<subseteq> ?L" using a' by (auto simp add: carrier_mult_of[symmetric] simp del: carrier_mult_of)
+    show "?R \<subseteq> ?L" using a by (auto simp add: carrier_mult_of[symmetric] simp del: carrier_mult_of)
   qed
-  have inj2:"inj_on (\<lambda> n . a(^)n) {n . n \<in> {1 .. d} \<and> group.ord (mult_of R) (a(^)n) = d}"
-    using inj unfolding inj_on_def by blast
-  hence card_proj_eq: "card ((\<lambda> n . a(^)n) ` {n . n \<in> {1 .. d} \<and> group.ord (mult_of R) (a(^)n) = d})
-                       = card {k . k \<in> {1 .. d} \<and> group.ord (mult_of R) (a(^)k) = d}"
-                       using card_image[OF inj2] by fast
-  have "{a(^)n| n . n \<in> {1 .. d} \<and> group.ord (mult_of R) (a(^)n) = d}
-        = (\<lambda> n . a(^)n) ` {n . n \<in> {1 .. d} \<and> group.ord (mult_of R) (a(^)n) = d}" by blast
-  hence card_proj_eq2:"card {a(^)n| n . n \<in> {1 .. d} \<and> group.ord (mult_of R) (a(^)n) = d}
-                       = card {k . k \<in> {1 .. d} \<and> group.ord (mult_of R) (a(^)k) = d}" 
-                      using card_proj_eq by presburger
-  show "?N d = phi' d"
-    using set_eq2 card_proj_eq2 G.pow_ord_eq_ord_iff[OF finite' `a \<in> _`, unfolded ord_a]
+  have "inj_on (\<lambda> n . a(^)n) {n . n \<in> {1 .. d} \<and> group.ord (mult_of R) (a(^)n) = d}"
+    using G.ord_inj'[OF finite' a, unfolded ord_a] unfolding inj_on_def by fast
+  hence "card ((\<lambda>n. a(^)n) ` {n . n \<in> {1 .. d} \<and> group.ord (mult_of R) (a(^)n) = d})
+         = card {k. k \<in> {1 .. d} \<and> group.ord (mult_of R) (a(^)k) = d}"
+         using card_image by blast
+  thus ?thesis using set_eq2 G.pow_ord_eq_ord_iff[OF finite' `a \<in> _`, unfolded ord_a]
     by (simp add: phi'_def)
 qed
 
 end
+
 
 theorem (in field) finite_field_mult_group_has_gen :
   assumes finite:"finite (carrier R)"
@@ -840,7 +722,7 @@ proof -
       next
       assume "card {a |a. a \<in> carrier (mult_of R) \<and> group.ord (mult_of R) a = d} \<noteq> 0"
       hence "\<exists>a \<in> carrier (mult_of R). group.ord (mult_of R) a = d" by (auto simp: card_eq_0_iff)
-      thus ?thesis using N_d_eq_phi'_d[OF finite d] by auto
+      thus ?thesis using num_elems_of_ord_eq_phi'[OF finite d] by auto
     qed
   }
   hence all_le:"\<And>i. i \<in> {d | d . d dvd order (mult_of R) } 
@@ -858,7 +740,7 @@ proof -
     fix i
     assume i1:"i \<in> {d |d. d dvd order (mult_of R)}" and "?N i \<noteq> phi' i"
     hence "?N i = 0"
-      using N_d_eq_phi'_d[OF finite, of i] by (auto simp: card_eq_0_iff)
+      using num_elems_of_ord_eq_phi'[OF finite, of i] by (auto simp: card_eq_0_iff)
     moreover  have "0 < i" using * i1 by (simp add: dvd_nat_bounds[of "order (mult_of R)" i])
     ultimately have "?N i < phi' i" using phi'_nonzero by presburger
     hence "(\<Sum>i\<in>{d. d dvd order (mult_of R)}. ?N i)
@@ -884,6 +766,5 @@ proof -
     using card_seteq[OF _ **] card_R_minus_1 finite unfolding order_def by simp
   thus ?thesis using a by blast
 qed
-
 
 end
