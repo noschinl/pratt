@@ -143,18 +143,20 @@ proof -
   } hence phi'_eq:"\<And>d. d dvd n \<Longrightarrow> phi' d = card {m . m \<in> {1 .. n} \<and> n div gcd m n = d}" 
       unfolding phi'_def by presburger
   have fin:"finite {d. d dvd n}" using dvd_nat_bounds[OF `n>0`] by force
-  have sum_card:"(\<Sum>d \<in> {d. d dvd n} . phi' d)
-                 = card (\<Union>d \<in> {d. d dvd n}. {m. m \<in> {1 .. n} \<and> n div gcd m n = d})" 
+  have "(\<Sum>d \<in> {d. d dvd n} . phi' d)
+                 = card (\<Union>d \<in> {d. d dvd n}. {m. m \<in> {1 .. n} \<and> n div gcd m n = d})"
     using card_UN_disjoint[OF fin, of "(\<lambda>d. {m. m \<in> {1 .. n} \<and> n div gcd m n = d})"] phi'_eq 
     by fastforce
-  have "(\<Union>d \<in> {d. d dvd n}. {m. m \<in> {1 .. n} \<and> n div gcd m n = d}) \<supseteq> {1 .. n}"(is "?L \<supseteq> ?R")
+  also have "(\<Union>d \<in> {d. d dvd n}. {m. m \<in> {1 .. n} \<and> n div gcd m n = d}) = {1 .. n}" (is "?L = ?R")
   proof
+    show "?L \<supseteq> ?R"
+    proof
       fix m assume m: "m \<in> ?R"
       thus "m \<in> ?L" using dvd_triv_right[of "n div gcd m n" "gcd m n"]
         by (simp add: dvd_mult_div_cancel)
-  qed
-  hence "(\<Union>d \<in> {d. d dvd n}. {m. m \<in> {1 .. n} \<and> n div gcd m n = d}) = {1 .. n}" by fastforce
-  thus ?thesis using sum_card by force
+    qed
+  qed fastforce
+  finally show ?thesis by force
 qed
 
 section {* Order of an element *}
