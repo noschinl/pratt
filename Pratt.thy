@@ -420,8 +420,9 @@ qed
 
 text {*
   We arrive at our final result: A number $p$ is prime if and only iff
-  there exists a primality certificate. This certificate is logarithmic
-  in $p$, which proves that the decision problem for Prime numbers is in NP.
+  there exists a primality certificate. The size of this certificate is
+  logarithmic in $p$, which proves that the decision problem for prime numbers
+  is in NP.
 *}
 
 corollary pratt:
