@@ -1,9 +1,8 @@
 theory Pratt
 imports
-  Main
+  Complex_Main
   Lehmer
   Algebra_Stuff_2
-  "~~/src/HOL/Log"
 begin
 
 section {* Lehmer *}
