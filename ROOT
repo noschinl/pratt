@@ -7,7 +7,6 @@ session "Pratt" = "HOL-Number_Theory" +
     "~~/src/HOL/Algebra/RingHom"
     "~~/src/HOL/Algebra/Module"
     "~~/src/HOL/Algebra/UnivPoly"
-    Unused
   theories
     Pratt
   files
