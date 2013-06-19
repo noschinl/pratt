@@ -6,7 +6,7 @@ begin
 
 (* XXX: Add to Isabelle *)
 
-text {* Proofs of Lehmer's theorem and the extended Lehmer's theorem *}
+section {* Proofs of Lehmer's theorem and the extended Lehmer's theorem *}
 
 (* XXX add to Isabelle! *)
 lemma prime_phi:
