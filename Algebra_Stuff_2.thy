@@ -1,6 +1,6 @@
 theory Algebra_Stuff_2 imports
   Algebra_Stuff
-  "~~/src/HOL/Number_Theory/Number_Theory"
+  Number_Theory
 begin
 
 lemma mod_nat_int_pow_eq:

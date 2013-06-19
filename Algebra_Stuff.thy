@@ -1,8 +1,7 @@
 theory Algebra_Stuff
 imports
-  Main
+  Complex_Main
   "~~/src/HOL/Algebra/Group"
-  "~~/src/HOL/GCD"
   "~~/src/HOL/Number_Theory/MiscAlgebra"
   "~~/src/HOL/Algebra/Coset"
   "~~/src/HOL/Algebra/UnivPoly"
