@@ -608,7 +608,7 @@ lemma (in group) pow_order_eq_1:
   assumes "finite (carrier G)" "x \<in> carrier G" shows "x (^) order G = \<one>"
   using assms by (metis nat_pow_pow ord_dvd_group_order pow_ord_eq_1 dvdE nat_pow_one)
 
-(* XXX remove in AFP devel *)
+(* XXX remove in AFP devel, replaced by div_eq_dividend_iff *)
 lemma nat_div_eq: "a \<noteq> 0 \<Longrightarrow> (a :: nat) div b = a \<longleftrightarrow> b = 1"
   apply rule
   apply (cases "b = 0")
