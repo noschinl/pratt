@@ -2,93 +2,9 @@ theory Pratt
 imports
   Complex_Main
   Lehmer
-  Algebra_Stuff_2
 begin
 
-section {* Lehmer *}
-
-theorem lehmer_backwards:
- assumes prime_p:"prime p"
- shows "\<exists> a. [a^(p - 1) = 1] (mod p) \<and> (\<forall> x . 0 < x \<longrightarrow> x \<le> p - 2 \<longrightarrow> [a^x \<noteq> 1] (mod p))"
- proof -
-   have "p \<ge> 2" by (rule prime_ge_2_nat[OF prime_p])
-   obtain a where a:"a \<in> {1 .. p - 1} \<and> {1 .. p - 1} = {a^i mod p|i . i \<in> UNIV}"
-    using residue_prime_mult_group_has_gen[OF prime_p] by blast
-  {
-   { fix x::nat assume x:"0 < x \<and> x \<le> p - 2 \<and> [a^x = 1] (mod p)"
-     have "{a^i mod p|i . i \<in> UNIV} = {a^i mod p | i . 0 < i \<and> i \<le> x}"
-     proof
-      show "{a ^ i mod p |i. 0 < i \<and> i \<le> x} \<subseteq> {a ^ i mod p |i. i \<in> UNIV}" by blast
-      { fix y assume y:"y \<in> {a^i mod p|i . i \<in> UNIV}"
-        then obtain i where i:"y = a^i mod p" by auto
-        def q \<equiv> "i div x" def r \<equiv> "i mod x"
-        have "i = q*x + r" by (simp add: r_def q_def)
-        hence y_q_r:"y = (((a ^ (q*x)) mod p) * ((a ^ r) mod p)) mod p"
-          by (simp add: i power_add mod_mult_eq[symmetric])
-        have "a ^ (q*x) mod p = (a ^ x mod p) ^ q mod p"
-          by (simp add: power_mod nat_mult_commute power_mult[symmetric])
-        hence y_r:"y = a ^ r mod p" using `p\<ge>2` x by (simp add: cong_nat_def y_q_r)
-        have "y \<in> {a ^ i mod p |i. 0 < i \<and> i \<le> x}"
-        proof (cases)
-          assume "r = 0"
-            hence "y = a^x mod p" using `p\<ge>2` x by (simp add: cong_nat_def y_r)
-            thus ?thesis using x by blast
-          next
-          assume "r \<noteq> 0"
-            thus ?thesis using x by (auto simp add: y_r r_def)
-        qed
-      }
-      thus " {a ^ i mod p|i. i \<in> UNIV} \<subseteq> {a ^ i mod p |i. 0 < i \<and> i \<le> x}" by auto
-    qed
-    note X = this
-
-    have "p - 1 = card {1 .. p - 1}" by auto
-    also have "{1 .. p - 1} = {a^i mod p | i . 1 \<le> i \<and> i \<le> x}" using X a by auto
-    also have "\<dots> = (\<lambda> i. a^i mod p) ` {1..x}" by auto
-    also have "card \<dots> \<le> p - 2"
-      using Finite_Set.card_image_le[of "{1..x}" "\<lambda> i. a^i mod p"] x by auto
-    finally have False using `2 \<le> p` by arith
-   }
-   hence "\<forall> x . 0 < x \<longrightarrow> x \<le> p - 2 \<longrightarrow> [a^x \<noteq> 1] (mod p)" by auto
- } note a_is_gen = this
- {
-    assume "a>1"
-    have "\<not> p dvd a "
-    proof (rule ccontr)
-      assume "\<not> \<not> p dvd a"
-      hence "p dvd a" by auto
-      have "p \<le> a" using dvd_nat_bounds[OF _ `p dvd a`] a by simp
-      thus False using `a>1` a by force
-    qed
-    hence "coprime a p" using prime_imp_coprime_nat[OF prime_p]  by (simp add: gcd_commute_nat)
-    hence "coprime (int a) (int p)" by (simp add: transfer_int_nat_gcd(1))
-    have "phi (int p) = p - 1" by (simp add: prime_int_def phi_prime prime_p)
-    hence "[a^(p - 1) = 1] (mod p)" using euler_theorem[OF _ `coprime (int a) (int p)`]
-      by (simp add: of_nat_power transfer_int_nat_cong[symmetric])
-  }
-  hence "[a^(p - 1) = 1] (mod p)" using a by fastforce
-  thus ?thesis using a_is_gen by auto
- qed
-
-theorem lehmer_extended_backwards:
- assumes prime_p:"prime(p)"
- shows "\<exists> a . [a^(p - 1) = 1] (mod p) \<and> 
-              (\<forall> q. q \<in> prime_factors (p - 1) \<longrightarrow> [a^((p - 1) div q) \<noteq> 1] (mod p))"
- proof -
-  have "p \<ge> 2" by (rule prime_ge_2_nat[OF prime_p])
-  obtain a where a:"[a^(p - 1) = 1] (mod p) \<and> (\<forall> x . 0 < x \<longrightarrow> x \<le> p - 2 \<longrightarrow> [a^x \<noteq> 1] (mod p))" 
-    using lehmer_backwards[OF prime_p] by blast
-  { fix q assume q:"q \<in> prime_factors (p - 1)"
-    hence "0 < q \<and> q \<le> p - 1" using `p\<ge>2` by (auto simp add: dvd_nat_bounds prime_factors_dvd_nat)
-    hence "(p - 1) div q \<ge> 1" using div_le_mono[of "q" "p - 1" q] div_self[of q] by linarith
-    have "q \<ge> 2" using q by (simp add: prime_factors_prime_nat prime_ge_2_nat)
-    hence "(p - 1) div q < p - 1" using `p \<ge> 2` by simp
-    hence "[a^((p - 1) div q) \<noteq> 1] (mod p)" using a `(p - 1) div q \<ge> 1` by fastforce
-  }
-  thus ?thesis using a by auto
- qed
-
-section {* Pratt's Prime Number Certificates *}
+section {* Pratt's Primality Certificates *}
 
 text {*
   Pratt's proof system is described in the following section.
@@ -234,6 +150,7 @@ text {*
   We show the completeness of Pratt's primality certificates, i.e. that for every prime number
   @{text p} a certificate exists, that is correct in terms of R1 and R2 and ends with
   Prime(@{text p}), by construction.
+
   We assume that we have some correct certificate that contains the statements Prime(@{text q}) for
   all prime factors @{text q} of @{text "p - 1"} for some prime number @{text p}.
   We extend this certificate to a certificate that ends with (p, a, p - 1) by starting with 
@@ -440,7 +357,7 @@ proof (induction p rule: less_induct)
                                                           by (blast intro: less.IH)
        obtain a where a:"[a^(p - 1) = 1] (mod p) \<and> (\<forall> q. q \<in> prime_factors (p - 1)
                   \<longrightarrow> [a^((p - 1) div q) \<noteq> 1] (mod p))"
-                  using lehmer_extended_backwards[OF `prime p`] by blast
+                  using converse_lehmer_extended[OF `prime p`] by blast
 
        have "\<not> prime (p - 1)" using `p>3` prime_gt_3_impl_p_minus_one_not_prime `prime p` by auto
        have "p \<noteq> 4" using `prime p` by auto
@@ -500,6 +417,12 @@ proof (induction p rule: less_induct)
      moreover have "p\<ge>2" using less by (simp add: prime_ge_2_nat)
      ultimately show ?case using less by fastforce
 qed
+
+text {*
+  We arrive at our final result: A number $p$ is prime if and only iff
+  there exists a primality certificate. This certificate is logarithmic
+  in $p$, which proves that the decision problem for Prime numbers is in NP.
+*}
 
 corollary pratt:
   "prime p \<longleftrightarrow> (\<exists>c . Prime p \<in> set c \<and> verify_pratt c \<and> length c \<le> 6*log 2 p - 4)"

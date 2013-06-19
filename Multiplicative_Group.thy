@@ -1,33 +1,19 @@
-theory Algebra_Stuff
+theory Multiplicative_Group
 imports
   Complex_Main
   "~~/src/HOL/Algebra/Group"
   "~~/src/HOL/Number_Theory/MiscAlgebra"
   "~~/src/HOL/Algebra/Coset"
   "~~/src/HOL/Algebra/UnivPoly"
+  Number_Theory (* XXX Only for the transfer to Z/pZ *)
 begin
-
-section {* Stuff *}
-
-lemma dvd_gcd :
-  fixes a b :: nat
-  obtains q where "a * (b div gcd a b) = b*q"
-proof
-  have "a * (b div gcd a b) = (a div gcd a b) * b" by (simp add:  div_mult_swap dvd_div_mult)
-  also have "\<dots> = b * (a div gcd a b)" by simp
-  finally show "a * (b div gcd a b) = b * (a div gcd a b) " .
-qed
-
-(* XXX to Nat.thy? *)
-lemma nat_div_eq: "a \<noteq> 0 \<Longrightarrow> (a :: nat) div b = a \<longleftrightarrow> b = 1"
-  apply rule
-  apply (cases "b = 0")
-  apply simp_all
-  apply (metis (full_types) One_nat_def Suc_lessI div_less_dividend less_not_refl3)
-  done
 
 
 section {* Properties of the Euler @{text \<phi>} function *}
+
+(* XXX Remove when we remove the Number_Theory import *)
+hide_const (open) Multiset.mult
+declare Cong.induct'_nat[induct del]
 
 lemma dvd_div_ge_1 :
   fixes a b :: nat
@@ -335,6 +321,15 @@ proof -
   thus ?thesis using q by simp
 qed
 
+lemma dvd_gcd :
+  fixes a b :: nat
+  obtains q where "a * (b div gcd a b) = b*q"
+proof
+  have "a * (b div gcd a b) = (a div gcd a b) * b" by (simp add:  div_mult_swap dvd_div_mult)
+  also have "\<dots> = b * (a div gcd a b)" by simp
+  finally show "a * (b div gcd a b) = b * (a div gcd a b) " .
+qed
+
 lemma ord_pow_dvd_ord_elem :
   assumes finite[simp]: "finite (carrier G)"
   assumes a[simp]:"a \<in> carrier G" 
@@ -454,6 +449,7 @@ qed
 end
 
 section {* Algebra *}
+
 
 definition mult_of :: "('a, 'b) ring_scheme \<Rightarrow> 'a monoid" where 
   "mult_of R \<equiv> \<lparr> carrier = carrier R - {\<zero>\<^bsub>R\<^esub>}, mult = mult R, one = \<one>\<^bsub>R\<^esub>\<rparr>"
@@ -611,6 +607,14 @@ text {*
 lemma (in group) pow_order_eq_1:
   assumes "finite (carrier G)" "x \<in> carrier G" shows "x (^) order G = \<one>"
   using assms by (metis nat_pow_pow ord_dvd_group_order pow_ord_eq_1 dvdE nat_pow_one)
+
+(* XXX remove in AFP devel *)
+lemma nat_div_eq: "a \<noteq> 0 \<Longrightarrow> (a :: nat) div b = a \<longleftrightarrow> b = 1"
+  apply rule
+  apply (cases "b = 0")
+  apply simp_all
+  apply (metis (full_types) One_nat_def Suc_lessI div_less_dividend less_not_refl3)
+  done
 
 lemma (in group)
   assumes finite': "finite (carrier G)"
@@ -775,5 +779,61 @@ proof -
     using card_seteq[OF _ **] card_R_minus_1 finite unfolding order_def by simp
   thus ?thesis using a by blast
 qed
+
+
+text {*
+  This result can be transferred to the multiplicative group of
+  $\mathbb{Z}/p\mathbb{Z}$ for $p$ prime. *}
+
+lemma mod_nat_int_pow_eq:
+  fixes n :: nat and p a :: int
+  assumes "a \<ge> 0" "p \<ge> 0"
+  shows "(nat a ^ n) mod (nat p) = nat ((a ^ n) mod p)"
+  using assms 
+  by (simp add: int_one_le_iff_zero_less nat_mod_distrib order_less_imp_le nat_power_eq[symmetric])
+
+theorem residue_prime_mult_group_has_gen :
+ fixes p :: nat
+ assumes prime_p : "prime p"
+ shows "\<exists> a \<in> {1 .. p - 1} . {1 .. p - 1} = {a^i mod p|i . i \<in> UNIV}"
+proof -
+  have "p\<ge>2" using prime_gt_1_nat[OF prime_p] by simp
+  interpret R:residues_prime "int p" "residue_ring (int p)" unfolding residues_prime_def
+    by (simp add: transfer_int_nat_prime prime_p)
+  have car: "carrier (residue_ring (int p)) - {\<zero>\<^bsub>residue_ring (int p)\<^esub>} =  {1 .. int p - 1}"
+    by (auto simp add: R.zero_cong R.res_carrier_eq)
+  obtain a where a:"a \<in> {1 .. int p - 1}"
+         and a_gen:"{1 .. int p - 1} = {a(^)\<^bsub>residue_ring (int p)\<^esub>i|i::nat . i \<in> UNIV}"
+    apply atomize_elim using field.finite_field_mult_group_has_gen[OF R.is_field]
+    by (auto simp add: car[symmetric] carrier_mult_of)
+  { fix x fix i :: nat assume x: "x \<in> {1 .. int p - 1}"
+    hence "x (^)\<^bsub>residue_ring (int p)\<^esub> i = x ^ i mod (int p)" using R.pow_cong[of x i] by auto}
+  note * = this
+  have **:"nat ` {1 .. int p - 1} = {1 .. p - 1}" (is "?L = ?R")
+  proof
+    { fix n assume n: "n \<in> ?L"
+      then have "n \<in> ?R" using `p\<ge>2` by force
+    } thus "?L \<subseteq> ?R" by blast
+    { fix n assume n: "n \<in> ?R"
+      then have "n \<in> ?L" using `p\<ge>2` Set_Interval.transfer_nat_int_set_functions(2) by fastforce
+    } thus "?R \<subseteq> ?L" by blast
+  qed
+  have "nat ` {a^i mod (int p)|i::nat . i \<in> UNIV} = {nat a^i mod p|i . i \<in> UNIV}" (is "?L = ?R")
+  proof
+    { fix x assume x: "x \<in> ?L"
+      then obtain i where i:"x = nat (a^i mod (int p))" by blast
+      hence "x = nat a ^ i mod p" using mod_nat_int_pow_eq[of a "int p" i] a `p\<ge>2` by auto
+      hence "x \<in> ?R" using i by blast 
+    } thus "?L \<subseteq> ?R" by blast
+    { fix x assume x: "x \<in> ?R"
+      then obtain i where i:"x = nat a^i mod p" by blast
+      hence "x \<in> ?L" using mod_nat_int_pow_eq[of a "int p" i] a `p\<ge>2` by auto
+    } thus "?R \<subseteq> ?L" by blast
+  qed
+  hence ***:"{1 .. p - 1} = {nat a^i mod p|i . i \<in> UNIV}" using * a a_gen ** by presburger
+  have "nat a \<in> {1 .. p - 1}" using a by force
+  thus ?thesis using *** by blast
+qed
+
 
 end

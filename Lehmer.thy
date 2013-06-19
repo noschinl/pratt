@@ -1,12 +1,14 @@
 theory Lehmer
 imports
   Main
-  "~~/src/HOL/Number_Theory/Number_Theory"
+  Multiplicative_Group
 begin
 
-(* XXX: Add to Isabelle *)
+section {* Lehmer's Theorem *}
 
-section {* Proofs of Lehmer's theorem and the extended Lehmer's theorem *}
+text {*
+  In this section we prove Lehmer's Theorem and an extended version
+*}
 
 (* XXX add to Isabelle! *)
 lemma prime_phi:
@@ -27,7 +29,7 @@ lemma coprime_power_nat:
   fixes a b :: nat assumes "0 < n" shows "coprime a (b ^ n) \<longleftrightarrow> coprime a b"
   using assms
 proof (induct n)
-  case (plus1 n) then show ?case
+  case (Suc n) then show ?case
     by (cases n) (simp_all add: coprime_mul_eq_nat del: One_nat_def)
 qed simp
 
@@ -157,49 +159,89 @@ next
   with lehmers_theorem[OF `2 \<le> p` _ cong1] show ?thesis by metis
 qed
 
+text {*
+  The converse of Lehmer's theorem is also true.
+*}
 
+theorem converse_lehmer:
+ assumes prime_p:"prime p"
+ shows "\<exists> a. [a^(p - 1) = 1] (mod p) \<and> (\<forall> x . 0 < x \<longrightarrow> x \<le> p - 2 \<longrightarrow> [a^x \<noteq> 1] (mod p))"
+ proof -
+   have "p \<ge> 2" by (rule prime_ge_2_nat[OF prime_p])
+   obtain a where a:"a \<in> {1 .. p - 1} \<and> {1 .. p - 1} = {a^i mod p|i . i \<in> UNIV}"
+    using residue_prime_mult_group_has_gen[OF prime_p] by blast
+  {
+   { fix x::nat assume x:"0 < x \<and> x \<le> p - 2 \<and> [a^x = 1] (mod p)"
+     have "{a^i mod p|i . i \<in> UNIV} = {a^i mod p | i . 0 < i \<and> i \<le> x}"
+     proof
+      show "{a ^ i mod p |i. 0 < i \<and> i \<le> x} \<subseteq> {a ^ i mod p |i. i \<in> UNIV}" by blast
+      { fix y assume y:"y \<in> {a^i mod p|i . i \<in> UNIV}"
+        then obtain i where i:"y = a^i mod p" by auto
+        def q \<equiv> "i div x" def r \<equiv> "i mod x"
+        have "i = q*x + r" by (simp add: r_def q_def)
+        hence y_q_r:"y = (((a ^ (q*x)) mod p) * ((a ^ r) mod p)) mod p"
+          by (simp add: i power_add mod_mult_eq[symmetric])
+        have "a ^ (q*x) mod p = (a ^ x mod p) ^ q mod p"
+          by (simp add: power_mod nat_mult_commute power_mult[symmetric])
+        hence y_r:"y = a ^ r mod p" using `p\<ge>2` x by (simp add: cong_nat_def y_q_r)
+        have "y \<in> {a ^ i mod p |i. 0 < i \<and> i \<le> x}"
+        proof (cases)
+          assume "r = 0"
+            hence "y = a^x mod p" using `p\<ge>2` x by (simp add: cong_nat_def y_r)
+            thus ?thesis using x by blast
+          next
+          assume "r \<noteq> 0"
+            thus ?thesis using x by (auto simp add: y_r r_def)
+        qed
+      }
+      thus " {a ^ i mod p|i. i \<in> UNIV} \<subseteq> {a ^ i mod p |i. 0 < i \<and> i \<le> x}" by auto
+    qed
+    note X = this
 
-section {* Unused *}
+    have "p - 1 = card {1 .. p - 1}" by auto
+    also have "{1 .. p - 1} = {a^i mod p | i . 1 \<le> i \<and> i \<le> x}" using X a by auto
+    also have "\<dots> = (\<lambda> i. a^i mod p) ` {1..x}" by auto
+    also have "card \<dots> \<le> p - 2"
+      using Finite_Set.card_image_le[of "{1..x}" "\<lambda> i. a^i mod p"] x by auto
+    finally have False using `2 \<le> p` by arith
+   }
+   hence "\<forall> x . 0 < x \<longrightarrow> x \<le> p - 2 \<longrightarrow> [a^x \<noteq> 1] (mod p)" by auto
+ } note a_is_gen = this
+ {
+    assume "a>1"
+    have "\<not> p dvd a "
+    proof (rule ccontr)
+      assume "\<not> \<not> p dvd a"
+      hence "p dvd a" by auto
+      have "p \<le> a" using dvd_nat_bounds[OF _ `p dvd a`] a by simp
+      thus False using `a>1` a by force
+    qed
+    hence "coprime a p" using prime_imp_coprime_nat[OF prime_p]  by (simp add: gcd_commute_nat)
+    hence "coprime (int a) (int p)" by (simp add: transfer_int_nat_gcd(1))
+    have "phi (int p) = p - 1" by (simp add: prime_int_def phi_prime prime_p)
+    hence "[a^(p - 1) = 1] (mod p)" using euler_theorem[OF _ `coprime (int a) (int p)`]
+      by (simp add: of_nat_power transfer_int_nat_cong[symmetric])
+  }
+  hence "[a^(p - 1) = 1] (mod p)" using a by fastforce
+  thus ?thesis using a_is_gen by auto
+ qed
 
-lemma cong_pow_1_int:
-  fixes a b :: int assumes "[a ^ x = 1] (mod b)" shows "[a ^ (x * y) = 1] (mod b)"
-by (metis assms cong_exp_int power_mult power_one)
-
-lemma cong_pow_comb_int:
-  fixes a b :: int
-  assumes "[a ^ m = 1] (mod b)" "[a ^ n = 1] (mod b)"
-  shows "[a ^ (m * c - n * d) = 1] (mod b)"
-proof -
-  from assms have cong_m: "[a ^ (m * c) = 1] (mod b)" and cong_n: "[a ^ (n * d) = 1] (mod b)"
-    by (simp_all add: cong_pow_1_int del: One_nat_def)
-  show ?thesis
-  proof (cases "m * c > n * d")
-    case True
-    have "[1 * a ^ (m * c - n * d) = a ^ (n * d) * a ^ (m * c - n * d)] (mod b)" using cong_n
-      by (intro cong_scalar_int) (simp add: cong_sym_eq_int)
-    also have "[a ^ (n * d) * a ^ (m * c - n * d) = 1] (mod b)"
-      using True cong_m by (simp add: power_add[symmetric])
-    finally show "[a ^ (m * c - n * d) = 1] (mod b)" by simp
-  qed simp
-qed
-
-lemma coprime_power_int:
-  fixes a b :: int assumes "0 < n" shows "coprime a (b ^ n) \<longleftrightarrow> coprime a b"
-  using assms
-proof (induct n)
-  case (plus1 n) then show ?case
-    by (cases n) (simp_all add: coprime_mul_eq_int del: One_nat_def)
-qed simp
-
-lemma mod_1_coprime_int:
-  fixes a b :: int assumes "0 < n" "[a ^ n = 1] (mod b)" shows "coprime a b"
-proof -
-  from assms have "coprime (a ^ n) b" by (simp cong: cong_gcd_eq_int)
-  with `0 < n` show ?thesis
-    by (simp add: coprime_power_int gcd_commute_int)
-qed
-
-
-
+theorem converse_lehmer_extended:
+ assumes prime_p:"prime(p)"
+ shows "\<exists> a . [a^(p - 1) = 1] (mod p) \<and> 
+              (\<forall> q. q \<in> prime_factors (p - 1) \<longrightarrow> [a^((p - 1) div q) \<noteq> 1] (mod p))"
+ proof -
+  have "p \<ge> 2" by (rule prime_ge_2_nat[OF prime_p])
+  obtain a where a:"[a^(p - 1) = 1] (mod p) \<and> (\<forall> x . 0 < x \<longrightarrow> x \<le> p - 2 \<longrightarrow> [a^x \<noteq> 1] (mod p))" 
+    using converse_lehmer[OF prime_p] by blast
+  { fix q assume q:"q \<in> prime_factors (p - 1)"
+    hence "0 < q \<and> q \<le> p - 1" using `p\<ge>2` by (auto simp add: dvd_nat_bounds prime_factors_dvd_nat)
+    hence "(p - 1) div q \<ge> 1" using div_le_mono[of "q" "p - 1" q] div_self[of q] by linarith
+    have "q \<ge> 2" using q by (simp add: prime_factors_prime_nat prime_ge_2_nat)
+    hence "(p - 1) div q < p - 1" using `p \<ge> 2` by simp
+    hence "[a^((p - 1) div q) \<noteq> 1] (mod p)" using a `(p - 1) div q \<ge> 1` by fastforce
+  }
+  thus ?thesis using a by auto
+ qed
 
 end
