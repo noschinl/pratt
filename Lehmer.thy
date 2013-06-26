@@ -7,7 +7,7 @@ begin
 section {* Lehmer's Theorem *}
 
 text {*
-  In this section we prove Lehmer's Theorem and an extended version
+  In this section we prove Lehmer's Theorem and an extended version\cite{lehmer1927fermat_converse}.
 *}
 
 (* XXX add to Isabelle! *)

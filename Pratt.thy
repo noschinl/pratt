@@ -7,11 +7,12 @@ begin
 section {* Pratt's Primality Certificates *}
 
 text {*
-  Pratt's proof system is described in the following section.
-  The certificates use two types of predicates:
+  The following section formalizes Pratt's proof system as described in his work
+  "Every Prime has a Succinct Certificate"\cite{pratt1975certificate}.
+  The proof system makes use of two types of predicates:
   \begin{itemize}
-    \item Prime(p): p is a prime number
-    \item (p, a, x): @{text "\<forall>q \<in> prime_factors(x). [a^((p - 1) div q) \<noteq> 1] (mod p)"}
+    \item Prime($p$): $p$ is a prime number
+    \item $(p, a, x)$: @{text "\<forall>q \<in> prime_factors(x). [a^((p - 1) div q) \<noteq> 1] (mod p)"}
   \end{itemize}
   We represent these predicates with the following datatype:
 *}
@@ -21,10 +22,10 @@ datatype pratt = Prime nat | Triple nat nat nat
 text {*
   We have the axiom (p, a, 1) and the following inference rules:
   \begin{itemize}
-  \item R1: If we know that (p, a, x) and @{text "[a^((p - 1) div q) \<noteq> 1] (mod p)"} hold for some
-              prime number q we can conclude (p, a, q*x) from that.
-  \item R2: If we know that (p, a, p - 1) and  @{text "[a^(p - 1) = 1] (mod p)"} hold, we can
-              infer Prime(p).
+  \item R1: If we know that $(p, a, x)$ and @{text "[a^((p - 1) div q) \<noteq> 1] (mod p)"} hold for some
+              prime number $q$ we can conclude $(p, a, qx)$ from that.
+  \item R2: If we know that $(p, a, p - 1)$ and  @{text "[a^(p - 1) = 1] (mod p)"} hold, we can
+              infer Prime($p$).
   \end{itemize}
   Both rules follow from Lehmer's theorem as we will show later on.
   The function @{text verify_pratt} checks a given certificate according to rules R1 and R2.
@@ -148,13 +149,13 @@ qed
 
 text {*
   We show the completeness of Pratt's primality certificates, i.e. that for every prime number
-  @{text p} a certificate exists, that is correct in terms of R1 and R2 and ends with
-  Prime(@{text p}), by construction.
+  $p$ a certificate exists, which is correct in terms of R1 and R2 and ends with
+  Prime($p$), by construction.
 
-  We assume that we have some correct certificate that contains the statements Prime(@{text q}) for
-  all prime factors @{text q} of @{text "p - 1"} for some prime number @{text p}.
-  We extend this certificate to a certificate that ends with (p, a, p - 1) by starting with 
-  (p, a, 1) and subsequently deducing (p, a, qx) from (p, a, x) according to R1.
+  We assume that we have some correct certificate that contains the statements Prime($q$) for
+  all prime factors $q$ of $p - 1$ for some prime number $p$.
+  We extend this certificate to a certificate that ends with $(p, a, p - 1)$ by starting with 
+  $(p, a, 1)$ and subsequently deducing $(p, a, qx)$ from $(p, a, x)$ according to R1.
   This construction is carried out by @{text "build_fpc p a 1 qs"}, if qs is a list that
   contains every prime factor @{text "q\<^bsub>i\<^esub>"} of @{text "p - 1"} exactly @{text "x\<^bsub>i\<^esub>"} times, if
   @{text "p - 1 = q\<^bsub>1\<^esub>\<^bsup>x\<^bsub>1\<^esub>\<^esup> \<dots> q\<^bsub>n\<^esub>\<^bsup>x\<^bsub>n\<^esub>\<^esup>"}.

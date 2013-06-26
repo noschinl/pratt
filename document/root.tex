@@ -35,9 +35,26 @@
 
 \begin{document}
 
-\title{Pratt}
+\title{Pratt's Primality Certificates \\ (Isabelle Formalisation)}
 \author{By Simon Wimmer and Lars Noschinski}
 \maketitle
+
+\begin{abstract}
+In 1975 Vaughan Pratt introduced a proof system for certifying primes in his work
+  "Every Prime has a Succinct Certiﬁcate"\cite{pratt1975certificate}.
+  By showing a logarithmic upper bound on the length of the certicates in size of the prime number,
+  he concluded that PRIMES $\in$ NP holds.
+  This work formalizes Pratt's proof system and show that Pratt's primality certificates are sound
+  and complete and that the size of a primality certificate for some prime p is logarithmic in p.
+  These proofs are based on Lehmer's theorem, also known as Little Fermat's Theorem Converse,
+  which is proved in the first part of this work.
+  As a side product of this proof, this work shows and formalizes some algebraic properties,
+  including:
+  \begin {itemize}
+  \item The notion of the order of an element
+  \item The existence of a generator for the multiplicative group of all finite fields
+  \end {itemize}
+\end{abstract}
 
 \tableofcontents
 
@@ -47,7 +64,7 @@
 % generated text of all theories
 \input{session}
 
-\nocite{pratt1975certificate}
+\nocite{*}
 
 % optional bibliography
 \bibliographystyle{abbrv}
