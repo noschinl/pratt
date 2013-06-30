@@ -87,9 +87,9 @@ text{*
   we get: @{term "(\<Sum>d \<in> {d . d dvd n} . phi' d) = n"}.
   To formalize this proof in Isabelle, we analyze for an arbitrary divisor $d$ of $n$
   \begin{itemize}
-    \item the set of reduced form numerators @{term [show_types=false] "{a. 1 \<le> a \<and> a \<le> d \<and> coprime a d}"}
+    \item the set of reduced form numerators @{term "{a. (1::nat) \<le> a \<and> a \<le> d \<and> coprime a d}"}
     \item the set of numerators $m$, for which $m/n$ has the reduced form denominator $d$,
-      i.e. the set @{term [show_types=false] {m . m \<in> {1 .. n} \<and> n div gcd m n = d}"}
+      i.e. the set @{term "{m . m \<in> {1::nat .. n} \<and> n div gcd m n = d}"}
   \end{itemize}
   We show that @{term "\<lambda>a. a*n div d"} with the inverse @{term "\<lambda>a. a div gcd a n"} is
   a bijection between theses sets, thus yielding the equality
@@ -98,7 +98,7 @@ text{*
   @{term [display] "(\<Sum>d \<in> {d. d dvd n} . phi' d)
           = card (\<Union>d \<in> {d. d dvd n}. {m. m \<in> {1 .. n} \<and> n div gcd m n = d})"}
   and by showing
-  @{term [show_types=false] "(\<Union>d \<in> {d. d dvd n}. {m. m \<in> {1 .. n} \<and> n div gcd m n = d}) \<supseteq> {1 .. n}"}
+  @{term "(\<Union>d \<in> {d. d dvd n}. {m. m \<in> {1::nat .. n} \<and> n div gcd m n = d}) \<supseteq> {1 .. n}"}
   (this is our counting argument) the thesis follows.
 *}
 lemma sum_phi'_factors :
