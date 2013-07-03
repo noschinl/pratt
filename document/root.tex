@@ -46,15 +46,24 @@
   By showing a logarithmic upper bound on the length of the certificates in size of the prime number,
   he concluded that the decision problem for prime numbers is in NP.
   This work formalizes Pratt's proof system and shows the results mentioned before.  
-  These proofs are based on Lehmer's theorem, a converse of Fermat's little theorem.
-  A proof of Lehmer's theorem is the first part of this work.
+  The proofs are based on Lehmer's theorem, a converse of Fermat's little theorem.
+  A proof of Lehmer's theorem constitutes the first part of this work.
   As a side product we formalize
-  some properties of the Euler phi function,
-  the notion of the order of an element,
-  and the cyclicity of the multiplicative group of any finite field.
+  some properties of the Euler $\phi$-function,
+  the notion of the order of an element of a group,
+  and the cyclicity of the multiplicative group of a finite field.
 \end{abstract}
 
 \tableofcontents
+
+Section \ref{sec:euler-phi} to \ref{sec:number-roots} formalize some basic number-theoretic
+and algebraic properties: Euler's $\phi$-function, the order of an element of a group
+and an upper bound of the number of roots of a polynomial. Section \ref{sec:mult-group}
+combines these results to prove that the multiplicative group of a finite field is cyclic.
+Based on that, Section \ref{sec:lehmer} formalizes an extended version of Lehmer's Theorem,
+which gives us necessary and sufficient conditions to decide whether a number is prime.
+Finally, Section \ref{sec:pratt} proves soundness and completeness for Pratt's Primality
+Certificates. Moreover, it also shows an upper bound for the length of the certificates.
 
 % sane default for proof documents
 \parindent 0pt\parskip 0.5ex

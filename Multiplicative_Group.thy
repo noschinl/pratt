@@ -9,7 +9,8 @@ imports
 begin
 
 
-section {* Properties of the Euler @{text \<phi>} function *}
+section {* Properties of the Euler @{text \<phi>}-function *}
+text_raw {* \label{sec:euler-phi} *}
 
 text{*
   In this section we prove that for every positive natural number the equation
@@ -33,7 +34,7 @@ lemma dvd_nat_bounds :
  shows "n > 0 \<and> n \<le> p" 
  using assms by (simp add: dvd_pos_nat dvd_imp_le)
 
-text {* Deviates from the definition given in the library in number theory *} 
+(* Deviates from the definition given in the library in number theory *)
 definition phi' :: "nat => nat"
   where "phi' m = card {x. 1 \<le> x \<and> x \<le> m \<and> gcd x m = 1}"
 
@@ -88,7 +89,7 @@ text{*
   This number is exactly @{term "phi' d"}.
 
   Finally, by counting the fractions $m/n$ according to their reduced form denominator,
-  we get: @{term "(\<Sum>d \<in> {d . d dvd n} . phi' d) = n"}.
+  we get: @{term [display] "(\<Sum>d \<in> {d . d dvd n} . phi' d) = n"}.
   To formalize this proof in Isabelle, we analyze for an arbitrary divisor $d$ of $n$
   \begin{itemize}
     \item the set of reduced form numerators @{term "{a. (1::nat) \<le> a \<and> a \<le> d \<and> coprime a d}"}
@@ -160,6 +161,8 @@ proof -
 qed
 
 section {* Order of an Element of a Group *}
+text_raw {* \label{sec:order-elem} *}
+
 
 context group begin
 
@@ -460,8 +463,10 @@ qed
 
 end
 
-section {* The number of roots of a polynomial is less than or equal
-           to the degree of the polynomial  *}
+
+
+section {* Number of Roots of a Polynomial *}
+text_raw {* \label{sec:number-roots} *}
 
 
 definition mult_of :: "('a, 'b) ring_scheme \<Rightarrow> 'a monoid" where 
@@ -611,6 +616,8 @@ qed
 
 
 section {* The Multiplicative Group of a Field *}
+text_raw {* \label{sec:mult-group} *}
+
 
 text {*
   In this section we show that the multiplicative group of

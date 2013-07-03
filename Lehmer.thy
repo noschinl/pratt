@@ -5,6 +5,8 @@ imports
 begin
 
 section {* Lehmer's Theorem *}
+text_raw {* \label{sec:lehmer} *}
+
 
 text {*
   In this section we prove Lehmer's Theorem and an extended version\cite{lehmer1927fermat_converse}.
@@ -164,7 +166,7 @@ text {*
 *}
 
 theorem converse_lehmer:
- assumes prime_p:"prime p"
+ assumes prime_p: "prime p"
  shows "\<exists> a. [a^(p - 1) = 1] (mod p) \<and> (\<forall> x . 0 < x \<longrightarrow> x \<le> p - 2 \<longrightarrow> [a^x \<noteq> 1] (mod p))"
  proof -
    have "p \<ge> 2" by (rule prime_ge_2_nat[OF prime_p])
