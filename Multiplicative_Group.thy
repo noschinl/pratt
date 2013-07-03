@@ -12,7 +12,8 @@ begin
 section {* Properties of the Euler @{text \<phi>} function *}
 
 text{*
-The main result we proof in this section is that for every positive natural number the equation $\sum_{d | n}^n \varphi(d) = n$ holds. 
+  In this section we prove that for every positive natural number the equation
+  $\sum_{d | n}^n \varphi(d) = n$ holds. 
 *}
 
 (* XXX Remove when we remove the Number_Theory import *)
@@ -35,6 +36,9 @@ lemma dvd_nat_bounds :
 text {* Deviates from the definition given in the library in number theory *} 
 definition phi' :: "nat => nat"
   where "phi' m = card {x. 1 \<le> x \<and> x \<le> m \<and> gcd x m = 1}"
+
+notation (latex_output)
+  phi' ("\<phi> _")
 
 lemma phi'_nonzero :
   assumes "m > 0"
