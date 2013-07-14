@@ -7,7 +7,6 @@ begin
 section {* Pratt's Primality Certificates *}
 text_raw {* \label{sec:pratt} *}
 
-
 text {*
   The following section formalizes Pratt's proof system as described in his work
   "Every Prime has a Succinct Certificate"\cite{pratt1975certificate}.
@@ -40,6 +39,20 @@ fun verify_pratt :: "pratt list \<Rightarrow> bool" where
                                        (\<exists>q y. x=q*y\<and> Prime q \<in> set xs \<and> Triple p a y \<in> set xs
                                         \<and> [a^((p - 1) div q) \<noteq> 1] (mod p)))
                                         \<and> verify_pratt xs"
+
+text {*
+  We define a function @{term size_cert} to measure the size of a certificate, assuming
+  a binary encoding of numbers. We will use this to show that there is a certificate for a
+  prime number $p$, such that the size of the certificate is polynomially bounded in the size
+  of the binary representation of $p$.
+*}
+fun size_pratt :: "pratt \<Rightarrow> real" where
+  "size_pratt (Prime p) = log 2 p" |
+  "size_pratt (Triple p a x) = log 2 p + log 2 a + log 2 x"
+
+fun size_cert :: "pratt list \<Rightarrow> real" where
+  "size_cert [] = 0" |
+  "size_cert (x # xs) = 1 + size_pratt x + size_cert xs"
 
 lemma pratt_append: 
   assumes "verify_pratt r"
@@ -162,21 +175,6 @@ text {*
   contains every prime factor @{text "q\<^bsub>i\<^esub>"} of @{text "p - 1"} exactly @{text "x\<^bsub>i\<^esub>"} times, if
   @{text "p - 1 = q\<^bsub>1\<^esub>\<^bsup>x\<^bsub>1\<^esub>\<^esup> \<dots> q\<^bsub>n\<^esub>\<^bsup>x\<^bsub>n\<^esub>\<^esup>"}.
 *}
-
-text {*
-  We define a function @{term size_cert} to measure the size of a certificate, assuming
-  a binary encoding of numbers. We will use this to show that there is a certificate for a
-  prime number $p$, such that the size of the certificate is polynomially bounded in the size
-  of the binary representation of $p$.
-*}
-fun size_pratt :: "pratt \<Rightarrow> real" where
-  "size_pratt (Prime p) = log 2 p" |
-  "size_pratt (Triple p a x) = log 2 p + log 2 a + log 2 x"
-
-fun size_cert :: "pratt list \<Rightarrow> real" where
-  "size_cert [] = 0" |
-  "size_cert (x # xs) = 1 + size_pratt x + size_cert xs"
-
 
 fun build_fpc :: "nat \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat list \<Rightarrow> pratt list" where
   "build_fpc p a r [] = [Triple p a r]" |
@@ -346,31 +344,32 @@ proof
   thus False using prime_factors_prime `p>3` `prime (p - 1)` by auto
 qed
 
-lemma size_cert_length: "size_cert c = length c + listsum (map size_pratt c)"
-  by (induct c) auto
-
-lemma size_cert_decomp:
-  fixes x y :: real
-  assumes "length c \<le> x" "0 \<le> y" "\<And>ce. ce \<in> set c \<Longrightarrow> size_pratt ce \<le> y" shows "size_cert c \<le> x*(1 + y)"
-proof -
-  have "listsum (map size_pratt c) \<le> listsum (map (\<lambda>_. y) c)"
-    using assms by (auto simp: listsum_mono)
-  also have "\<dots> \<le> length c * y" by (auto simp: listsum_triv real_of_nat_def)
-  also have "\<dots> \<le> x * y" using assms by (auto intro: mult_right_mono)
-  finally show ?thesis unfolding size_cert_length using assms by (auto simp: algebra_simps)
+lemma size_pratt_fpc:
+  assumes "a \<le> p" "r \<le> p" "0 < a" "0 < r" "0 < p" "listprod qs = r"
+  shows "\<forall>x \<in> set (build_fpc p a r qs) . size_pratt x \<le> 3 * log 2 p" using assms
+proof (induction qs arbitrary: r)
+  case Nil
+    have "log 2 (real a) + log 2 (real r) \<le> log 2 (real p) + log 2 (real r)" using Nil by simp
+    also have "\<dots> \<le> 2 * log 2 (real p)" using Nil by simp
+    finally show ?case using Nil by simp
+  next
+  case (Cons q qs)
+    have "log 2 (real a) + log 2 (real r) \<le> log 2 (real p) + log 2 (real r)" using Cons by simp
+    also have "\<dots> \<le> 2 * log 2 (real p)" using Cons by simp
+    finally have *:"log 2 (real a) + log 2 (real r) \<le> 2 * log 2 (real p)" .
+    have "q dvd r" using Cons.prems by auto
+    hence "r div q > 0" using Cons.prems by (metis div_gt_0 dvd_nat_bounds)
+    have **:"listprod qs = r div q" using `q dvd r` Cons.prems(6)
+      by simp (metis `0 < r div q` div_by_0 div_mult_self1_is_id less_numeral_extra(3))
+    have "q > 0" using Cons.prems by auto
+    hence "r div q \<le> p" using `r\<le>p` by (metis div_le_dividend le_trans)
+    thus ?case using Cons `r div q > 0` * ** by simp
 qed
 
-lemma size_cert_concat:
-  "size_cert (concat xss) = listsum (map size_cert xss)"
-  by (induct xss) (auto simp: size_cert_length)
-
-theorem pratt_complete:
+theorem pratt_complete':
   assumes "prime p"
-  shows "\<exists>c. Prime p \<in> set c \<and> verify_pratt c \<and> size_cert c \<le> (6 * (log 2 p) - 4) * (1 + 3 * log 2 p)" using assms
+  shows "\<exists>c. Prime p \<in> set c \<and> verify_pratt c \<and> length c \<le> 6*log 2 p - 4 \<and> (\<forall> x \<in> set c. size_pratt x \<le> 3 * log 2 p)" using assms
 proof (induction p rule: less_induct)
-  let ?lenb = "\<lambda>p. 6 * (log 2 p) - 4"
-  let ?sizeeb = "\<lambda>p. 3 * log 2 p"
-  let ?sizecb = "\<lambda>p. ?lenb p * (1 + ?sizeeb p)"
   case (less p)
     { assume [simp]: "p = 2"
       have "Prime p \<in> set [Prime 2, Triple 2 1 1]" by simp
@@ -379,33 +378,23 @@ proof (induction p rule: less_induct)
     { assume [simp]: "p = 3"
       let ?cert = "[Prime 3, Triple 3 2 2, Triple 3 2 1, Prime 2, Triple 2 1 1]"
 
-      have "size_cert ?cert \<le> ?sizecb p"
-      proof (rule size_cert_decomp)
-        have "length ?cert \<le> ?lenb p \<longleftrightarrow> 2 powr 9 \<le> 2 powr (log 2 p * 6)"
-          by auto
-          also have "\<dots> \<longleftrightarrow> True"
-          by (simp add: powr_powr[symmetric] powr_realpow_numeral)
-          finally show "length ?cert \<le> ?lenb p" by simp
-
-        show "0 \<le> 3 * log 2 p" by auto
-
-        have [arith]: "1 \<le> log 2 3" by auto
-        fix ce assume "ce \<in> set ?cert"
-        then show "size_pratt ce \<le> ?sizeeb p" by auto
-      qed
-      then have ?case
-        by (intro exI[where x="?cert"] conjI) (auto simp add: cong_nat_def)
+      have "length ?cert \<le> 6*log 2 p - 4
+            \<longleftrightarrow> 2 powr 9 \<le> 2 powr (log 2 p * 6)" by auto
+      also have "\<dots> \<longleftrightarrow> True"
+        by (simp add: powr_powr[symmetric] powr_realpow_numeral)
+      finally have ?case
+        by (intro exI[where x="?cert"]) (simp add: cong_nat_def)
      }
      moreover
      { assume "p > 3"
 
        have "\<forall>q \<in> prime_factors (p - 1) . q < p" using `prime p`
-         by (fastforce elim: p_in_prime_factorsE)
-       hence factor_certs:"\<forall>q \<in> prime_factors (p - 1) . (\<exists>c . (Prime q \<in> set c) \<and> (verify_pratt c)
-                                                          \<and> size_cert c \<le> ?sizecb q)"
-                                                          by (blast intro: less.IH)
+        by (fastforce elim: p_in_prime_factorsE)
+       hence factor_certs:"\<forall>q \<in> prime_factors (p - 1) . (\<exists>c . ((Prime q \<in> set c) \<and> (verify_pratt c)
+                                                          \<and> length c \<le> 6*log 2 q - 4) \<and> (\<forall> x \<in> set c. size_pratt x \<le> 3 * log 2 q))"
+                                                          by (auto intro: less.IH)
        obtain a where a:"[a^(p - 1) = 1] (mod p) \<and> (\<forall> q. q \<in> prime_factors (p - 1)
-                  \<longrightarrow> [a^((p - 1) div q) \<noteq> 1] (mod p))"
+                  \<longrightarrow> [a^((p - 1) div q) \<noteq> 1] (mod p))" and a_size: "a > 0" "a < p"
                   using converse_lehmer_extended[OF `prime p`] by blast
 
        have "\<not> prime (p - 1)" using `p>3` prime_gt_3_impl_p_minus_one_not_prime `prime p` by auto
@@ -416,16 +405,39 @@ proof (induction p rule: less_induct)
                       and qs_eq:"set qs = prime_factors (p - 1)" and qs_length_eq: "length qs \<ge> 2"
                       using prime_factors_list[OF _ `\<not> prime (p - 1)`] by auto
        obtain f where f:"\<forall>q \<in> prime_factors (p - 1) . \<exists> c. f q = c
-                         \<and> ((Prime q \<in> set c) \<and> (verify_pratt c) \<and> size_cert c \<le> ?sizecb q)"
+                         \<and> ((Prime q \<in> set c) \<and> (verify_pratt c) \<and> length c \<le> 6*log 2 q - 4)
+                         \<and> (\<forall> x \<in> set c. size_pratt x \<le> 3 * log 2 q)"
                          using factor_certs by metis
        let ?cs = "map f qs"
        have cs: "\<forall>q \<in> prime_factors (p - 1) . (\<exists>c \<in> set ?cs . (Prime q \<in> set c) \<and> (verify_pratt c)
-                                               \<and> size_cert c \<le> ?lenb q * (1 + ?sizeeb q))"
+                                               \<and> length c \<le> 6*log 2 q - 4
+                                               \<and> (\<forall> x \<in> set c. size_pratt x \<le> 3 * log 2 q))"
          using f qs_eq by auto
+       
+       have cs_cert_size:"\<forall> c \<in> set ?cs . \<forall> x \<in> set c. size_pratt x \<le> 3 * log 2 p"
+       proof
+         fix c assume c:"c \<in> set (map f qs)"
+         then obtain q where "c = f q" and "q \<in> set qs" by auto
+         hence *:"\<forall> x \<in> set c. size_pratt x \<le> 3 * log 2 q" using f qs_eq by blast
+         have "q < p" "q > 0" using `\<forall>q \<in> prime_factors (p - 1) . q < p` `q \<in> set qs` qs_eq by fast+
+         show "\<forall> x \<in> set c. size_pratt x \<le> 3 * log 2 p"
+         proof
+           fix x assume "x \<in> set c"
+           hence "size_pratt x \<le> 3 * log 2 q" using * by fastforce
+           also have "\<dots> \<le> 3 * log 2 p" using `q < p` `q > 0` `p > 3` by simp
+           finally show "size_pratt x \<le> 3 * log 2 p" .
+         qed
+       qed
+
        have cs_verify_all: "\<forall>c \<in> set ?cs . verify_pratt c"
          using f qs_eq by fastforce
-
-       have "Triple p a (p - 1) \<in> set ((build_fpc p a (p - 1) qs)@ concat ?cs)" by (cases qs) auto
+       
+       have "\<forall> x \<in> set (build_fpc p a (p - 1) qs). size_pratt x \<le> 3 * log 2 p"
+        using cs_cert_size a_size `p > 3` prod_qs_eq by (intro size_pratt_fpc) auto
+       hence "\<forall> x \<in> set (build_fpc p a (p - 1) qs@ concat ?cs) . size_pratt x \<le> 3 * log 2 p"
+        using cs_cert_size by auto
+       moreover
+       have "Triple p a (p - 1) \<in> set (build_fpc p a (p - 1) qs@ concat ?cs)" by (cases qs) auto
        moreover
        have "verify_pratt ((build_fpc p a (p - 1) qs)@ concat ?cs)"
        proof (rule correct_fpc)
@@ -441,25 +453,8 @@ proof (induction p rule: less_induct)
        { let ?k = "length qs"
 
          have qs_ge_2:"\<forall>q \<in> set qs . q \<ge> 2" using qs_eq
-           by (simp add: prime_factors_prime_nat prime_ge_2_nat)
+          by (simp add: prime_factors_prime_nat prime_ge_2_nat)
 
-         have "\<forall>x\<in>set qs. size_cert (f x) \<le> ?sizecb x" using f qs_eq by blast
-         hence "size_cert (concat ?cs) \<le> (\<Sum> q \<leftarrow> qs . ?sizecb q)"
-           by (auto simp: size_cert_concat intro: listsum_mono)
-         (*** XXX ***)
-         hence "length (Prime p # ((build_fpc p a (p - 1) qs)@ concat ?cs))
-                \<le> ((\<Sum> q \<leftarrow> (map real qs) . 6*log 2 q - 4) + ?k + 2)"
-                by (simp add: o_def length_fpc)
-         also have "\<dots> = (6*(\<Sum> q \<leftarrow> (map real qs) . log 2 q) + (-4 * real ?k) + ?k + 2)"
-           by (simp add: o_def listsum_subtractf listsum_triv real_of_nat_def listsum_const_mult)
-         also have "\<dots> \<le> 6*log 2 (p - 1) - 4" using `?k\<ge>2` prod_qs_eq listsum_log[of 2 qs] qs_ge_2 
-          by force
-         also have "\<dots> \<le> 6*log 2 p - 4" using Log.log_le_cancel_iff[of 2 "p - 1" p] `p>3` by force
-         ultimately have "length (Prime p # ((build_fpc p a (p - 1) qs)@ concat ?cs))
-                          \<le> 6*log 2 p - 4" by linarith
-         have "size_cert (Prime p # ((build_fpc p a (p - 1) qs)@ concat ?cs)) \<le> ?sizecb p" sorry
-         (*** XXX end ***)
-         (*
          have "\<forall>x\<in>set qs. real (length (f x)) \<le> 6 * log 2 (real x) - 4" using f qs_eq by blast
          hence "length (concat ?cs) \<le> (\<Sum> q \<leftarrow> qs . 6*log 2 q - 4)" using concat_length_le
           by fast
@@ -473,16 +468,35 @@ proof (induction p rule: less_induct)
          also have "\<dots> \<le> 6*log 2 p - 4" using Log.log_le_cancel_iff[of 2 "p - 1" p] `p>3` by force
          ultimately have "length (Prime p # ((build_fpc p a (p - 1) qs)@ concat ?cs))
                           \<le> 6*log 2 p - 4" by linarith
-         *)
        }
        ultimately obtain c where c:"Triple p a (p - 1) \<in> set c" "verify_pratt c" 
-                                   "size_cert (Prime p #c) \<le> ?sizecb p" by blast                 
+                                   "length (Prime p #c) \<le> 6*log 2 p - 4"
+                                   "(\<forall> x \<in> set c. size_pratt x \<le> 3 * log 2 p)" by blast               
        hence "Prime p \<in> set (Prime p # c)" "verify_pratt (Prime p # c)"
+             "(\<forall> x \<in> set (Prime p # c). size_pratt x \<le> 3 * log 2 p)"
         using a `prime p` by auto
        hence ?case using c by blast
      }
      moreover have "p\<ge>2" using less by (simp add: prime_ge_2_nat)
      ultimately show ?case using less by fastforce
+qed
+
+lemma size_pratt_le:
+ fixes d::real
+ assumes "\<forall> x \<in> set c. size_pratt x \<le> d"
+ shows "size_cert c \<le> length c * (1 + d)" using assms
+ by (induction c) (simp_all add: real_of_nat_def algebra_simps)
+
+theorem pratt_complete:
+  assumes "prime p"
+  shows "\<exists>c. Prime p \<in> set c \<and> verify_pratt c \<and> size_cert c \<le> (6 * log 2 p - 4) * (1 + 3 * log 2 p)"
+proof -
+  obtain c where c:"Prime p \<in> set c \<and> verify_pratt c
+                    \<and> length c \<le> 6*log 2 p - 4 \<and> (\<forall> x \<in> set c. size_pratt x \<le> 3 * log 2 p)"
+                  using pratt_complete' assms by blast
+  hence "size_cert c \<le> length c * (1 + 3 * log 2 p)" by (simp add: size_pratt_le)
+  also have "\<dots> \<le> (6*log 2 p - 4) * (1 + 3 * log 2 p)" using c by simp
+  finally show ?thesis using c by blast
 qed
 
 text {*
@@ -493,23 +507,8 @@ text {*
 *}
 
 corollary pratt:
-  "prime p \<longleftrightarrow> (\<exists>c . Prime p \<in> set c \<and> verify_pratt c \<and> size_cert c \<le> 20 * (log 2 p)^2)"
-proof -
-  { fix p :: nat assume "prime p"
-    then have "2 \<le> p" by auto
-    have log_sq: "log 2 p \<le> (log 2 p)^2"
-      using `2 \<le> p` by (auto simp: eval_nat_numeral)
-    have "(6 * (log 2 p) - 4) * (1 + 3 * log 2 p) \<le> 2 * log 2 p + 18 * log 2 p * log 2 p - 4"
-      using `2 \<le> p` by (auto simp: algebra_simps)
-    also have "\<dots> \<le> 2 * log 2 p + 18 * log 2 p * log 2 p"
-      by arith
-    also have "\<dots> \<le> 2 * log 2 p + 18 * (log 2 p)^2"
-      by (auto simp: eval_nat_numeral)
-    also have "\<dots> \<le> 20 * (log 2 p)^2"
-      using log_sq by arith
-    finally have "\<exists>c. Prime p \<in> set c \<and> verify_pratt c \<and> size_cert c \<le> 20 * (log 2 p)^2"
-      using pratt_complete[OF `prime p`] by auto }
-  then show ?thesis using pratt_sound(1) by auto
-qed
+  "prime p \<longleftrightarrow>
+   (\<exists>c . Prime p \<in> set c \<and> verify_pratt c \<and> size_cert c \<le> (6 * log 2 p - 4) * (1 + 3 * log 2 p))"
+  using pratt_complete pratt_sound(1) by auto
 
 end

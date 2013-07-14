@@ -5,8 +5,6 @@ imports
 begin
 
 section {* Lehmer's Theorem *}
-text_raw {* \label{sec:lehmer} *}
-
 
 text {*
   In this section we prove Lehmer's Theorem and an extended version\cite{lehmer1927fermat_converse}.
@@ -166,8 +164,9 @@ text {*
 *}
 
 theorem converse_lehmer:
- assumes prime_p: "prime p"
- shows "\<exists> a. [a^(p - 1) = 1] (mod p) \<and> (\<forall> x . 0 < x \<longrightarrow> x \<le> p - 2 \<longrightarrow> [a^x \<noteq> 1] (mod p))"
+ assumes prime_p:"prime p"
+ shows "\<exists> a. [a^(p - 1) = 1] (mod p) \<and> (\<forall> x . 0 < x \<longrightarrow> x \<le> p - 2 \<longrightarrow> [a^x \<noteq> 1] (mod p))
+             \<and> a > 0 \<and> a < p"
  proof -
    have "p \<ge> 2" by (rule prime_ge_2_nat[OF prime_p])
    obtain a where a:"a \<in> {1 .. p - 1} \<and> {1 .. p - 1} = {a^i mod p|i . i \<in> UNIV}"
@@ -225,16 +224,18 @@ theorem converse_lehmer:
       by (simp add: of_nat_power transfer_int_nat_cong[symmetric])
   }
   hence "[a^(p - 1) = 1] (mod p)" using a by fastforce
-  thus ?thesis using a_is_gen by auto
+  thus ?thesis using a_is_gen a by auto
  qed
 
 theorem converse_lehmer_extended:
  assumes prime_p:"prime(p)"
  shows "\<exists> a . [a^(p - 1) = 1] (mod p) \<and> 
-              (\<forall> q. q \<in> prime_factors (p - 1) \<longrightarrow> [a^((p - 1) div q) \<noteq> 1] (mod p))"
+              (\<forall> q. q \<in> prime_factors (p - 1) \<longrightarrow> [a^((p - 1) div q) \<noteq> 1] (mod p))
+              \<and> a > 0 \<and> a < p"
  proof -
   have "p \<ge> 2" by (rule prime_ge_2_nat[OF prime_p])
-  obtain a where a:"[a^(p - 1) = 1] (mod p) \<and> (\<forall> x . 0 < x \<longrightarrow> x \<le> p - 2 \<longrightarrow> [a^x \<noteq> 1] (mod p))" 
+  obtain a where a:"[a^(p - 1) = 1] (mod p) \<and> (\<forall> x . 0 < x \<longrightarrow> x \<le> p - 2 \<longrightarrow> [a^x \<noteq> 1] (mod p))
+                    \<and> a > 0 \<and> a < p" 
     using converse_lehmer[OF prime_p] by blast
   { fix q assume q:"q \<in> prime_factors (p - 1)"
     hence "0 < q \<and> q \<le> p - 1" using `p\<ge>2` by (auto simp add: dvd_nat_bounds prime_factors_dvd_nat)
