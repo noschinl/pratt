@@ -40,20 +40,6 @@ fun verify_pratt :: "pratt list \<Rightarrow> bool" where
                                         \<and> [a^((p - 1) div q) \<noteq> 1] (mod p)))
                                         \<and> verify_pratt xs"
 
-text {*
-  We define a function @{term size_cert} to measure the size of a certificate, assuming
-  a binary encoding of numbers. We will use this to show that there is a certificate for a
-  prime number $p$, such that the size of the certificate is polynomially bounded in the size
-  of the binary representation of $p$.
-*}
-fun size_pratt :: "pratt \<Rightarrow> real" where
-  "size_pratt (Prime p) = log 2 p" |
-  "size_pratt (Triple p a x) = log 2 p + log 2 a + log 2 x"
-
-fun size_cert :: "pratt list \<Rightarrow> real" where
-  "size_cert [] = 0" |
-  "size_cert (x # xs) = 1 + size_pratt x + size_cert xs"
-
 lemma pratt_append: 
   assumes "verify_pratt r"
   assumes "verify_pratt s"
@@ -143,6 +129,27 @@ proof (induction c arbitrary: p a x t)
 qed
 
 
+text {*
+  We define a function @{term size_cert} to measure the size of a certificate, assuming
+  a binary encoding of numbers. We will use this to show that there is a certificate for a
+  prime number $p$, such that the size of the certificate is polynomially bounded in the size
+  of the binary representation of $p$.
+*}
+fun size_pratt :: "pratt \<Rightarrow> real" where
+  "size_pratt (Prime p) = log 2 p" |
+  "size_pratt (Triple p a x) = log 2 p + log 2 a + log 2 x"
+
+fun size_cert :: "pratt list \<Rightarrow> real" where
+  "size_cert [] = 0" |
+  "size_cert (x # xs) = 1 + size_pratt x + size_cert xs"
+
+lemma size_pratt_le:
+ fixes d::real
+ assumes "\<forall> x \<in> set c. size_pratt x \<le> d"
+ shows "size_cert c \<le> length c * (1 + d)" using assms
+ by (induction c) (simp_all add: real_of_nat_def algebra_simps)
+
+
 lemma concat_verify: "(\<forall>x \<in> set xs . verify_pratt x) \<Longrightarrow> verify_pratt (concat xs)"
   by (induction xs) (auto simp add: pratt_append)
 
@@ -215,6 +222,33 @@ qed
 lemma length_fpc:
   "length (build_fpc p a r qs) = length qs + 1" by (induction qs arbitrary: r) auto
 
+lemma div_gt_0:
+  fixes m n :: nat assumes "m \<le> n" "0 < m" shows "0 < n div m"
+proof -
+  have "0 < m div m" using `0 < m` div_self by auto
+  also have "m div m \<le> n div m" using `m \<le> n` by (rule div_le_mono)
+  finally show ?thesis .
+qed
+
+lemma size_pratt_fpc:
+  assumes "a \<le> p" "r \<le> p" "0 < a" "0 < r" "0 < p" "listprod qs = r"
+  shows "\<forall>x \<in> set (build_fpc p a r qs) . size_pratt x \<le> 3 * log 2 p" using assms
+proof (induction qs arbitrary: r)
+  case Nil
+    have "log 2 (real a) + log 2 (real r) \<le> log 2 (real p) + log 2 (real r)" using Nil by simp
+    also have "\<dots> \<le> 2 * log 2 (real p)" using Nil by simp
+    finally show ?case using Nil by simp
+  next
+  case (Cons q qs)
+    have "log 2 (real a) + log 2 (real r) \<le> log 2 (real p) + log 2 (real r)" using Cons by simp
+    also have "\<dots> \<le> 2 * log 2 (real p)" using Cons by simp
+    finally have  "log 2 (real a) + log 2 (real r) \<le> 2 * log 2 (real p)" .
+    moreover have "r div q > 0" using Cons.prems by (fastforce intro: div_gt_0)
+    moreover hence "listprod qs = r div q" using Cons.prems(6) by auto
+    moreover have "r div q \<le> p" using `r\<le>p` div_le_dividend[of r q] by linarith
+    ultimately show ?case using Cons by simp
+qed
+
 lemma concat_set:
  assumes 1: "\<forall> q \<in> qs . \<exists> c \<in> set cs . Prime q \<in> set c"
  shows "\<forall> q \<in> qs . Prime q \<in> set (concat cs)" using assms by (induction cs) auto
@@ -229,14 +263,6 @@ proof
   
   from assms show "p dvd n" by (intro prime_factors_dvd_nat)
   then show "p \<le> n" using  `0 < n` by (rule dvd_imp_le)
-qed
-
-lemma div_gt_0:
-  fixes m n :: nat assumes "m \<le> n" "0 < m" shows "0 < n div m"
-proof -
-  have "0 < m div m" using `0 < m` div_self by auto
-  also have "m div m \<le> n div m" using `m \<le> n` by (rule div_le_mono)
-  finally show ?thesis .
 qed
 
 lemma prime_factors_list_prime:
@@ -342,28 +368,6 @@ proof
   hence "2 dvd (p - 1)" by presburger
   hence "2 \<in> prime_factors (p - 1)" using `p>3` by (auto simp: prime_factors_altdef2_nat)
   thus False using prime_factors_prime `p>3` `prime (p - 1)` by auto
-qed
-
-lemma size_pratt_fpc:
-  assumes "a \<le> p" "r \<le> p" "0 < a" "0 < r" "0 < p" "listprod qs = r"
-  shows "\<forall>x \<in> set (build_fpc p a r qs) . size_pratt x \<le> 3 * log 2 p" using assms
-proof (induction qs arbitrary: r)
-  case Nil
-    have "log 2 (real a) + log 2 (real r) \<le> log 2 (real p) + log 2 (real r)" using Nil by simp
-    also have "\<dots> \<le> 2 * log 2 (real p)" using Nil by simp
-    finally show ?case using Nil by simp
-  next
-  case (Cons q qs)
-    have "log 2 (real a) + log 2 (real r) \<le> log 2 (real p) + log 2 (real r)" using Cons by simp
-    also have "\<dots> \<le> 2 * log 2 (real p)" using Cons by simp
-    finally have *:"log 2 (real a) + log 2 (real r) \<le> 2 * log 2 (real p)" .
-    have "q dvd r" using Cons.prems by auto
-    hence "r div q > 0" using Cons.prems by (metis div_gt_0 dvd_nat_bounds)
-    have **:"listprod qs = r div q" using `q dvd r` Cons.prems(6)
-      by simp (metis `0 < r div q` div_by_0 div_mult_self1_is_id less_numeral_extra(3))
-    have "q > 0" using Cons.prems by auto
-    hence "r div q \<le> p" using `r\<le>p` by (metis div_le_dividend le_trans)
-    thus ?case using Cons `r div q > 0` * ** by simp
 qed
 
 theorem pratt_complete':
@@ -481,13 +485,7 @@ proof (induction p rule: less_induct)
      ultimately show ?case using less by fastforce
 qed
 
-lemma size_pratt_le:
- fixes d::real
- assumes "\<forall> x \<in> set c. size_pratt x \<le> d"
- shows "size_cert c \<le> length c * (1 + d)" using assms
- by (induction c) (simp_all add: real_of_nat_def algebra_simps)
-
-theorem pratt_complete:
+corollary pratt_complete:
   assumes "prime p"
   shows "\<exists>c. Prime p \<in> set c \<and> verify_pratt c \<and> size_cert c \<le> (6 * log 2 p - 4) * (1 + 3 * log 2 p)"
 proof -
