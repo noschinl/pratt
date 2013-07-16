@@ -1,4 +1,4 @@
-theory Pratt
+theory Pratt_Certificate
 imports
   Complex_Main
   Lehmer

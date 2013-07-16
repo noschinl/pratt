@@ -9,6 +9,107 @@ imports
 begin
 
 
+section {* Simplification Rules for Polynomials *}
+text_raw {* \label{sec:simp-rules} *}
+
+lemma (in ring_hom_cring) hom_sub[simp]:
+  assumes "x \<in> carrier R" "y \<in> carrier R"
+  shows "h (x \<ominus> y) = h x \<ominus>\<^bsub>S\<^esub> h y"
+  using assms by (simp add: R.minus_eq S.minus_eq)
+
+context UP_ring begin
+
+lemma deg_nzero_nzero:
+  assumes deg_p_nzero: "deg R p \<noteq> 0"
+  shows "p \<noteq> \<zero>\<^bsub>P\<^esub>"
+  using deg_zero deg_p_nzero by auto
+
+lemma deg_add_eq:
+  assumes c: "p \<in> carrier P" "q \<in> carrier P"
+  assumes "deg R q \<noteq> deg R p"
+  shows "deg R (p \<oplus>\<^bsub>P\<^esub> q) = max (deg R p) (deg R q)"
+proof -
+  let ?m = "max (deg R p) (deg R q)"
+  from assms have "coeff P p ?m = \<zero> \<longleftrightarrow> coeff P q ?m \<noteq> \<zero>"
+    by (metis deg_belowI lcoeff_nonzero[OF deg_nzero_nzero] linear min_max.le_iff_sup min_max.sup_absorb1)
+  then have "coeff P (p \<oplus>\<^bsub>P\<^esub> q) ?m \<noteq> \<zero>"
+    using assms by auto
+  then have "deg R (p \<oplus>\<^bsub>P\<^esub> q) \<ge> ?m"
+    using assms by (blast intro: deg_belowI)
+  with deg_add[OF c] show ?thesis by arith
+qed
+
+lemma deg_minus_eq:
+  assumes "p \<in> carrier P" "q \<in> carrier P" "deg R q \<noteq> deg R p"
+  shows "deg R (p \<ominus>\<^bsub>P\<^esub> q) = max (deg R p) (deg R q)"
+  using assms by (simp add: deg_add_eq a_minus_def)
+
+end
+
+context UP_cring begin
+
+lemma evalRR_add:
+  assumes "p \<in> carrier P" "q \<in> carrier P"
+  assumes x:"x \<in> carrier R"
+  shows "eval R R id x (p \<oplus>\<^bsub>P\<^esub> q) = eval R R id x p \<oplus> eval R R id x q"
+proof -
+  interpret UP_pre_univ_prop R R id by unfold_locales simp
+  interpret ring_hom_cring P R "eval R R id x" by unfold_locales (rule eval_ring_hom[OF x])
+  show ?thesis using assms by simp
+qed
+
+lemma evalRR_sub:
+  assumes "p \<in> carrier P" "q \<in> carrier P"
+  assumes x:"x \<in> carrier R"
+  shows "eval R R id x (p \<ominus>\<^bsub>P\<^esub> q) = eval R R id x p \<ominus> eval R R id x q"
+proof -
+  interpret UP_pre_univ_prop R R id by unfold_locales simp
+  interpret ring_hom_cring P R "eval R R id x" by unfold_locales (rule eval_ring_hom[OF x])
+  show ?thesis using assms by simp
+qed
+
+lemma evalRR_mult:
+  assumes "p \<in> carrier P" "q \<in> carrier P"
+  assumes x:"x \<in> carrier R"
+  shows "eval R R id x (p \<otimes>\<^bsub>P\<^esub> q) = eval R R id x p \<otimes> eval R R id x q"
+proof -
+  interpret UP_pre_univ_prop R R id by unfold_locales simp
+  interpret ring_hom_cring P R "eval R R id x" by unfold_locales (rule eval_ring_hom[OF x])
+  show ?thesis using assms by simp
+qed
+
+lemma evalRR_monom:
+  assumes a: "a \<in> carrier R" and x: "x \<in> carrier R"
+  shows "eval R R id x (monom P a d) = a \<otimes> x (^) d"
+proof -
+  interpret UP_pre_univ_prop R R id by unfold_locales simp
+  show ?thesis using assms by (simp add: eval_monom)
+qed
+
+lemma evalRR_one:
+  assumes x: "x \<in> carrier R"
+  shows "eval R R id x \<one>\<^bsub>P\<^esub> = \<one>"
+proof -
+  interpret UP_pre_univ_prop R R id by unfold_locales simp
+  interpret ring_hom_cring P R "eval R R id x" by unfold_locales (rule eval_ring_hom[OF x])
+  show ?thesis using assms by simp
+qed
+
+lemma carrier_evalRR:
+  assumes x: "x \<in> carrier R" and "p \<in> carrier P"
+  shows "eval R R id x p \<in> carrier R"
+proof -
+  interpret UP_pre_univ_prop R R id by unfold_locales simp
+  interpret ring_hom_cring P R "eval R R id x" by unfold_locales (rule eval_ring_hom[OF x])
+  show ?thesis using assms by simp
+qed
+
+lemmas evalRR_simps = evalRR_add evalRR_sub evalRR_mult evalRR_monom evalRR_one carrier_evalRR
+
+end
+
+
+
 section {* Properties of the Euler @{text \<phi>}-function *}
 text_raw {* \label{sec:euler-phi} *}
 
@@ -464,7 +565,6 @@ qed
 end
 
 
-
 section {* Number of Roots of a Polynomial *}
 text_raw {* \label{sec:number-roots} *}
 
@@ -559,7 +659,7 @@ next
       by (metis R.one_zeroI R.zero_not_one)
     obtain q  where q:"(q \<in> carrier P)" and
       f:"f = (monom P \<one>\<^bsub>R\<^esub> 1 \<ominus>\<^bsub> P\<^esub> monom P a 0) \<otimes>\<^bsub>P\<^esub> q \<oplus>\<^bsub>P\<^esub> monom P (eval R R id a f) 0"
-     using remainder_theorem[OF Suc.prems(1) a_carrier R_not_triv] by (atomize_elim)
+     using remainder_theorem[OF Suc.prems(1) a_carrier R_not_triv] by auto
     hence lin_fac: "f = (monom P \<one>\<^bsub>R\<^esub> 1 \<ominus>\<^bsub> P\<^esub> monom P a 0) \<otimes>\<^bsub>P\<^esub> q" using q by (simp add: a_root)
     have deg:"deg R (monom P \<one>\<^bsub>R\<^esub> 1 \<ominus>\<^bsub> P\<^esub> monom P a 0) = 1"
       using a_carrier by (simp add: deg_minus_eq)

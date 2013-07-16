@@ -149,7 +149,7 @@ diff --git a/src/HOL/Algebra/UnivPoly.thy b/src/HOL/Algebra/UnivPoly.thy
 +proof -
 +  interpret UP_pre_univ_prop R R id by unfold_locales simp
 +  interpret ring_hom_cring P R "eval R R id x" by unfold_locales (rule eval_ring_hom[OF x])
-+  show ?thesis using assms using [[simp_trace]] by simp
++  show ?thesis using assms by simp
 +qed
 +
 +lemma evalRR_mult:
