@@ -97,7 +97,7 @@ proof -
     by auto
   have cong_m: "[a ^ (m * c) = 1] (mod b)" and cong_n: "[a ^ (n * d) = 1] (mod b)"
     using cong_props by (simp_all only: cong_pow_1_nat power_mult)
-  have "[1 * a ^ gcd m n = a ^ (n * d) * a ^ gcd m n] (mod b)" 
+  have "[1 * a ^ gcd m n = a ^ (n * d) * a ^ gcd m n] (mod b)"
     using cong_n[simplified cong_sym_eq_nat] by (simp only: power_one cong_scalar_nat)
   also have "[a ^ (n * d) * a ^ gcd m n = a ^ (m * c)] (mod b)"
     using gcd by (simp add: power_add)
@@ -229,13 +229,13 @@ theorem converse_lehmer:
 
 theorem converse_lehmer_extended:
  assumes prime_p:"prime(p)"
- shows "\<exists> a . [a^(p - 1) = 1] (mod p) \<and> 
+ shows "\<exists> a . [a^(p - 1) = 1] (mod p) \<and>
               (\<forall> q. q \<in> prime_factors (p - 1) \<longrightarrow> [a^((p - 1) div q) \<noteq> 1] (mod p))
               \<and> a > 0 \<and> a < p"
  proof -
   have "p \<ge> 2" by (rule prime_ge_2_nat[OF prime_p])
   obtain a where a:"[a^(p - 1) = 1] (mod p) \<and> (\<forall> x . 0 < x \<longrightarrow> x \<le> p - 2 \<longrightarrow> [a^x \<noteq> 1] (mod p))
-                    \<and> a > 0 \<and> a < p" 
+                    \<and> a > 0 \<and> a < p"
     using converse_lehmer[OF prime_p] by blast
   { fix q assume q:"q \<in> prime_factors (p - 1)"
     hence "0 < q \<and> q \<le> p - 1" using `p\<ge>2` by (auto simp add: dvd_nat_bounds prime_factors_dvd_nat)
