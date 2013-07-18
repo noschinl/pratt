@@ -73,8 +73,8 @@ proof
 qed
 
 text {*
-  We now show that every statement that we obtain by building a certificate according to rules R1
-  and R2 really fulfills the predicates we definded in the beginning,
+  We now show that every statement that we obtain by building a certificate according to
+  rules R1 and R2 really fulfills the predicates we definded in the beginning,
   i.e. we show the soundness of Pratt's primality certificates.
 *}
 
@@ -335,7 +335,7 @@ lemma listsum_log:
   fixes xs::"nat list"
   assumes b: "b > 0" "b \<noteq> 1"
   assumes xs:"\<forall> x \<in> set xs . x \<ge> b"
-  shows "(\<Sum> x \<leftarrow> xs . log b x) = log b (listprod xs)"
+  shows "(\<Sum>x\<leftarrow>xs. log b x) = log b (listprod xs)"
   using assms
 proof (induction xs)
   case Nil
@@ -349,7 +349,7 @@ qed
 lemma concat_length_le:
   fixes g :: "nat \<Rightarrow> real"
   assumes "\<forall> x \<in> set xs . real (length (f x)) \<le> g x"
-  shows "length (concat (map f xs)) \<le> (\<Sum> x \<leftarrow> xs . g x)" using assms
+  shows "length (concat (map f xs)) \<le> (\<Sum>x\<leftarrow>xs. g x)" using assms
   by (induction xs) force+
 
 (* XXX move *)
@@ -458,12 +458,12 @@ proof (induction p rule: less_induct)
         by (simp add: prime_factors_prime_nat prime_ge_2_nat)
 
       have "\<forall>x\<in>set qs. real (length (f x)) \<le> 6 * log 2 (real x) - 4" using f qs_eq by blast
-      hence "length (concat ?cs) \<le> (\<Sum> q \<leftarrow> qs . 6*log 2 q - 4)" using concat_length_le
+      hence "length (concat ?cs) \<le> (\<Sum>q\<leftarrow>qs. 6*log 2 q - 4)" using concat_length_le
         by fast
       hence "length (Prime p # ((build_fpc p a (p - 1) qs)@ concat ?cs))
-            \<le> ((\<Sum> q \<leftarrow> (map real qs) . 6*log 2 q - 4) + ?k + 2)"
+            \<le> ((\<Sum>q\<leftarrow>(map real qs). 6*log 2 q - 4) + ?k + 2)"
             by (simp add: o_def length_fpc)
-      also have "\<dots> = (6*(\<Sum> q \<leftarrow> (map real qs) . log 2 q) + (-4 * real ?k) + ?k + 2)"
+      also have "\<dots> = (6*(\<Sum>q\<leftarrow>(map real qs). log 2 q) + (-4 * real ?k) + ?k + 2)"
         by (simp add: o_def listsum_subtractf listsum_triv real_of_nat_def listsum_const_mult)
       also have "\<dots> \<le> 6*log 2 (p - 1) - 4" using `?k\<ge>2` prod_qs_eq listsum_log[of 2 qs] qs_ge_2
         by force

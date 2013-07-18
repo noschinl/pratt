@@ -169,14 +169,14 @@ theorem converse_lehmer:
              \<and> a > 0 \<and> a < p"
  proof -
    have "p \<ge> 2" by (rule prime_ge_2_nat[OF prime_p])
-   obtain a where a:"a \<in> {1 .. p - 1} \<and> {1 .. p - 1} = {a^i mod p|i . i \<in> UNIV}"
+   obtain a where a:"a \<in> {1 .. p - 1} \<and> {1 .. p - 1} = {a^i mod p | i . i \<in> UNIV}"
     using residue_prime_mult_group_has_gen[OF prime_p] by blast
   {
    { fix x::nat assume x:"0 < x \<and> x \<le> p - 2 \<and> [a^x = 1] (mod p)"
-     have "{a^i mod p|i . i \<in> UNIV} = {a^i mod p | i . 0 < i \<and> i \<le> x}"
+     have "{a^i mod p| i. i \<in> UNIV} = {a^i mod p | i. 0 < i \<and> i \<le> x}"
      proof
-      show "{a ^ i mod p |i. 0 < i \<and> i \<le> x} \<subseteq> {a ^ i mod p |i. i \<in> UNIV}" by blast
-      { fix y assume y:"y \<in> {a^i mod p|i . i \<in> UNIV}"
+      show "{a ^ i mod p | i. 0 < i \<and> i \<le> x} \<subseteq> {a ^ i mod p | i. i \<in> UNIV}" by blast
+      { fix y assume y:"y \<in> {a^i mod p| i . i \<in> UNIV}"
         then obtain i where i:"y = a^i mod p" by auto
         def q \<equiv> "i div x" def r \<equiv> "i mod x"
         have "i = q*x + r" by (simp add: r_def q_def)
@@ -185,7 +185,7 @@ theorem converse_lehmer:
         have "a ^ (q*x) mod p = (a ^ x mod p) ^ q mod p"
           by (simp add: power_mod nat_mult_commute power_mult[symmetric])
         hence y_r:"y = a ^ r mod p" using `p\<ge>2` x by (simp add: cong_nat_def y_q_r)
-        have "y \<in> {a ^ i mod p |i. 0 < i \<and> i \<le> x}"
+        have "y \<in> {a ^ i mod p | i. 0 < i \<and> i \<le> x}"
         proof (cases)
           assume "r = 0"
             hence "y = a^x mod p" using `p\<ge>2` x by (simp add: cong_nat_def y_r)
@@ -195,12 +195,12 @@ theorem converse_lehmer:
             thus ?thesis using x by (auto simp add: y_r r_def)
         qed
       }
-      thus " {a ^ i mod p|i. i \<in> UNIV} \<subseteq> {a ^ i mod p |i. 0 < i \<and> i \<le> x}" by auto
+      thus " {a ^ i mod p|i. i \<in> UNIV} \<subseteq> {a ^ i mod p | i. 0 < i \<and> i \<le> x}" by auto
     qed
     note X = this
 
     have "p - 1 = card {1 .. p - 1}" by auto
-    also have "{1 .. p - 1} = {a^i mod p | i . 1 \<le> i \<and> i \<le> x}" using X a by auto
+    also have "{1 .. p - 1} = {a^i mod p | i. 1 \<le> i \<and> i \<le> x}" using X a by auto
     also have "\<dots> = (\<lambda> i. a^i mod p) ` {1..x}" by auto
     also have "card \<dots> \<le> p - 2"
       using Finite_Set.card_image_le[of "{1..x}" "\<lambda> i. a^i mod p"] x by auto
