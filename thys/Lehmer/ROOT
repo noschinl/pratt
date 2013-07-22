@@ -1,5 +1,5 @@
 (* Session name, add to AFP group, list base session: *)
-session "Pratt_Certificate" (AFP) = "HOL-Number_Theory" +
+session "Lehmer" (AFP) = "HOL-Number_Theory" +
 
 (* Timeout (in sec) in case of non-termination problems *)
   options [timeout = 3600]
@@ -15,7 +15,7 @@ session "Pratt_Certificate" (AFP) = "HOL-Number_Theory" +
 
 (* The top-level theories of the submission *)
   theories
-    Pratt
+    Lehmer
 
 (* Dependencies on non-Isabelle files *)
   files
