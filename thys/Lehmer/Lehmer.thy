@@ -5,9 +5,13 @@ imports
 begin
 
 section {* Lehmer's Theorem *}
+text_raw {* \label{sec:lehmer} *}
 
 text {*
-  In this section we prove Lehmer's Theorem and an extended version\cite{lehmer1927fermat_converse}.
+  In this section we prove Lehmer's Theorem~\cite{lehmer1927fermat_converse} and its converse.
+  These two theorems characterize a necessary and complete criterion for primality. This criterion
+  is the basis of the Lucas-Lehmer primality test and the primality certificates of
+  Pratt~\cite{pratt1975certificate}.
 *}
 
 (* XXX add to Isabelle! *)
@@ -59,7 +63,12 @@ proof -
   then show ?thesis by auto
 qed
 
-lemma lehmers_theorem:
+text {*
+  This is a weak variant of Lehmer's theorem: All numbers less then @{term "p - 1 :: nat"}
+  must be considered.
+*}
+
+lemma lehmers_weak_theorem:
   assumes "2 \<le> p"
   assumes min_cong1: "\<And>x. 0 < x \<Longrightarrow> x < p - 1 \<Longrightarrow> [a ^ x \<noteq> 1] (mod p)"
   assumes cong1: "[a ^ (p - 1) = 1] (mod p)"
@@ -110,7 +119,7 @@ lemma One_leq_div:
 by (metis assms dvd_mult_div_cancel gr_implies_not0 less_Suc0 linorder_not_le mult_1_right
   mult_zero_right nat_1 order_le_neq_trans order_refl transfer_nat_int_numerals(2))
 
-lemma lehmer_extended:
+theorem lehmers_theorem:
   assumes "2 \<le> p"
   assumes pf_notcong1: "\<And>x. x \<in> prime_factors (p - 1) \<Longrightarrow> [a ^ ((p - 1) div x) \<noteq> 1] (mod p)"
   assumes cong1: "[a ^ (p - 1) = 1] (mod p)"
@@ -156,27 +165,27 @@ next
         by (metis `0 < x` gcd_le1_nat gr_implies_not0 linorder_not_less)
     qed
   }
-  with lehmers_theorem[OF `2 \<le> p` _ cong1] show ?thesis by metis
+  with lehmers_weak_theorem[OF `2 \<le> p` _ cong1] show ?thesis by metis
 qed
 
 text {*
   The converse of Lehmer's theorem is also true.
 *}
 
-theorem converse_lehmer:
+lemma converse_lehmer_weak:
  assumes prime_p:"prime p"
  shows "\<exists> a. [a^(p - 1) = 1] (mod p) \<and> (\<forall> x . 0 < x \<longrightarrow> x \<le> p - 2 \<longrightarrow> [a^x \<noteq> 1] (mod p))
              \<and> a > 0 \<and> a < p"
  proof -
    have "p \<ge> 2" by (rule prime_ge_2_nat[OF prime_p])
-   obtain a where a:"a \<in> {1 .. p - 1} \<and> {1 .. p - 1} = {a^i mod p|i . i \<in> UNIV}"
+   obtain a where a:"a \<in> {1 .. p - 1} \<and> {1 .. p - 1} = {a^i mod p | i . i \<in> UNIV}"
     using residue_prime_mult_group_has_gen[OF prime_p] by blast
   {
    { fix x::nat assume x:"0 < x \<and> x \<le> p - 2 \<and> [a^x = 1] (mod p)"
-     have "{a^i mod p|i . i \<in> UNIV} = {a^i mod p | i . 0 < i \<and> i \<le> x}"
+     have "{a^i mod p| i. i \<in> UNIV} = {a^i mod p | i. 0 < i \<and> i \<le> x}"
      proof
-      show "{a ^ i mod p |i. 0 < i \<and> i \<le> x} \<subseteq> {a ^ i mod p |i. i \<in> UNIV}" by blast
-      { fix y assume y:"y \<in> {a^i mod p|i . i \<in> UNIV}"
+      show "{a ^ i mod p | i. 0 < i \<and> i \<le> x} \<subseteq> {a ^ i mod p | i. i \<in> UNIV}" by blast
+      { fix y assume y:"y \<in> {a^i mod p| i . i \<in> UNIV}"
         then obtain i where i:"y = a^i mod p" by auto
         def q \<equiv> "i div x" def r \<equiv> "i mod x"
         have "i = q*x + r" by (simp add: r_def q_def)
@@ -185,7 +194,7 @@ theorem converse_lehmer:
         have "a ^ (q*x) mod p = (a ^ x mod p) ^ q mod p"
           by (simp add: power_mod nat_mult_commute power_mult[symmetric])
         hence y_r:"y = a ^ r mod p" using `p\<ge>2` x by (simp add: cong_nat_def y_q_r)
-        have "y \<in> {a ^ i mod p |i. 0 < i \<and> i \<le> x}"
+        have "y \<in> {a ^ i mod p | i. 0 < i \<and> i \<le> x}"
         proof (cases)
           assume "r = 0"
             hence "y = a^x mod p" using `p\<ge>2` x by (simp add: cong_nat_def y_r)
@@ -195,12 +204,12 @@ theorem converse_lehmer:
             thus ?thesis using x by (auto simp add: y_r r_def)
         qed
       }
-      thus " {a ^ i mod p|i. i \<in> UNIV} \<subseteq> {a ^ i mod p |i. 0 < i \<and> i \<le> x}" by auto
+      thus " {a ^ i mod p|i. i \<in> UNIV} \<subseteq> {a ^ i mod p | i. 0 < i \<and> i \<le> x}" by auto
     qed
     note X = this
 
     have "p - 1 = card {1 .. p - 1}" by auto
-    also have "{1 .. p - 1} = {a^i mod p | i . 1 \<le> i \<and> i \<le> x}" using X a by auto
+    also have "{1 .. p - 1} = {a^i mod p | i. 1 \<le> i \<and> i \<le> x}" using X a by auto
     also have "\<dots> = (\<lambda> i. a^i mod p) ` {1..x}" by auto
     also have "card \<dots> \<le> p - 2"
       using Finite_Set.card_image_le[of "{1..x}" "\<lambda> i. a^i mod p"] x by auto
@@ -227,7 +236,7 @@ theorem converse_lehmer:
   thus ?thesis using a_is_gen a by auto
  qed
 
-theorem converse_lehmer_extended:
+theorem converse_lehmer:
  assumes prime_p:"prime(p)"
  shows "\<exists> a . [a^(p - 1) = 1] (mod p) \<and>
               (\<forall> q. q \<in> prime_factors (p - 1) \<longrightarrow> [a^((p - 1) div q) \<noteq> 1] (mod p))
@@ -236,7 +245,7 @@ theorem converse_lehmer_extended:
   have "p \<ge> 2" by (rule prime_ge_2_nat[OF prime_p])
   obtain a where a:"[a^(p - 1) = 1] (mod p) \<and> (\<forall> x . 0 < x \<longrightarrow> x \<le> p - 2 \<longrightarrow> [a^x \<noteq> 1] (mod p))
                     \<and> a > 0 \<and> a < p"
-    using converse_lehmer[OF prime_p] by blast
+    using converse_lehmer_weak[OF prime_p] by blast
   { fix q assume q:"q \<in> prime_factors (p - 1)"
     hence "0 < q \<and> q \<le> p - 1" using `p\<ge>2` by (auto simp add: dvd_nat_bounds prime_factors_dvd_nat)
     hence "(p - 1) div q \<ge> 1" using div_le_mono[of "q" "p - 1" q] div_self[of q] by linarith

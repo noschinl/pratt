@@ -35,37 +35,33 @@
 
 \begin{document}
 
-\title{Pratt's Primality Certificates \\ (Isabelle Formalisation)}
+\title{A Formalisation of Lehmer's Primality Criterion}
 \author{By Simon Wimmer and Lars Noschinski}
 \maketitle
 
 \begin{abstract}
-  In 1975, Pratt introduced a proof system for certifying primes
-  \cite{pratt1975certificate}.
-  He showed that a number $p$ is prime iff a primality certificate for $p$ exists.
-  By showing a logarithmic upper bound on the length of the certificates in size of the prime number,
-  he concluded that the decision problem for prime numbers is in NP.
+  In 1927, Lehmer presented criterions for primality, based on the
+  converse of Fermat's litte theorem~\cite{lehmer1927fermat_converse}.
+  This work formalizes the second criterion from Lehmer's paper,
+  a necessary and sufficient condition for primality.
 
-  This work formalizes Pratt's proof system and shows the results mentioned before.  
-  The proofs are based on Lehmer's theorem, a converse of Fermat's little theorem.
-  A proof of Lehmer's theorem constitutes the first part of this work.
   As a side product we formalize
-  some properties of the Euler $\phi$-function,
+  some properties of the Euler $\varphi$-function,
   the notion of the order of an element of a group,
   and the cyclicity of the multiplicative group of a finite field.
 \end{abstract}
 
 \tableofcontents
 
+\section{Introduction}
+
 Section \ref{sec:simp-rules} provides some technical lemmas about polynomials.
 Section \ref{sec:euler-phi} to \ref{sec:number-roots} formalize some basic number-theoretic
-and algebraic properties: Euler's $\phi$-function, the order of an element of a group
+and algebraic properties: Euler's $\varphi$-function, the order of an element of a group
 and an upper bound of the number of roots of a polynomial. Section \ref{sec:mult-group}
 combines these results to prove that the multiplicative group of a finite field is cyclic.
 Based on that, Section \ref{sec:lehmer} formalizes an extended version of Lehmer's Theorem,
 which gives us necessary and sufficient conditions to decide whether a number is prime.
-Finally, Section \ref{sec:pratt} proves soundness and completeness for Pratt's Primality
-Certificates. Moreover, it also shows an upper bound for the length of the certificates.
 
 % sane default for proof documents
 \parindent 0pt\parskip 0.5ex
